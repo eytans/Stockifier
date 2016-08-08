@@ -14,7 +14,6 @@ namespace stockDB
         {
             using (var db = new StockContext())
             {
-                //C:\Users\sdshw\Desktop\Stockfier\stockifier\stockDB\stockDB\bin\Debug\
                 string workingDir = AppDomain.CurrentDomain.BaseDirectory;
                 DirectoryInfo baseDir = new DirectoryInfo(@"..\..\..\..");
                 DirectoryInfo dataDir = baseDir.GetDirectories(@"resources\Datenbank\data")[0];
@@ -64,7 +63,7 @@ namespace stockDB
             }
         }
 
-        static public void clearTables()
+        static public void ClearTables()
         {
             using (var db = new StockContext())
             {
@@ -79,18 +78,12 @@ namespace stockDB
                 db.SaveChanges();
             }
         } 
-        //C:\Datenbank\data\AAOI
+        
         static void Main(string[] args)
         {
-            //clearTables();
             LoadDB();
-            //using (var db = new StockContext())
-            //{
-            //    Stock st = db.Stocks.FirstOrDefault();
-            //    Console.WriteLine(st.Data.Count);
-            //}
-            //string workingDir = AppDomain.CurrentDomain.BaseDirectory;
-            //Console.WriteLine(workingDir);
+            if (args.Length > 1 && args[1].ToLower().Equals("clear"))
+                ClearTables();
             Console.ReadLine();
         }
     }
