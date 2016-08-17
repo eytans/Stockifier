@@ -81,15 +81,9 @@ namespace stockDB
         
         static void Main(string[] args)
         {
-            //clearTables();
             LoadDB();
-            //using (var db = new StockContext())
-            //{
-            //    Stock st = db.Stocks.FirstOrDefault();
-            //    Console.WriteLine(st.Data.Count);
-            //}
-            //string workingDir = AppDomain.CurrentDomain.BaseDirectory;
-            //Console.WriteLine(workingDir);
+            if (args.Length > 1 && args[1].ToLower().Equals("clear"))
+                ClearTables();
             Console.ReadLine();
         }
     }

@@ -14,6 +14,7 @@ namespace stockDB
         {
             using (var db = new StockContext())
             {
+                //C:\Users\sdshw\Desktop\Stockfier\stockifier\stockDB\stockDB\bin\Debug\
                 string workingDir = AppDomain.CurrentDomain.BaseDirectory;
                 DirectoryInfo baseDir = new DirectoryInfo(@"..\..\..\..");
                 DirectoryInfo dataDir = baseDir.GetDirectories(@"resources\Datenbank\data")[0];
@@ -63,7 +64,7 @@ namespace stockDB
             }
         }
 
-        static public void ClearTables()
+        static public void clearTables()
         {
             using (var db = new StockContext())
             {
@@ -78,7 +79,7 @@ namespace stockDB
                 db.SaveChanges();
             }
         } 
-        
+        //C:\Datenbank\data\AAOI
         static void Main(string[] args)
         {
             //clearTables();

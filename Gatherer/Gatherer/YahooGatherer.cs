@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -46,7 +45,7 @@ namespace Gatherers
         {
             string baseUrl = "http://finance.yahoo.com/d/quotes.csv?s={0}&f={1}";
             // TODO: probably change ToString to GetName or Name
-            string stockNames = stocks.Aggregate("", (s1, s2) => s1 + "+" + s2.ToString());
+            string stockNames = stocks.Skip(1).Aggregate(stocks.First().ToString(), (s1, s2) => s1 + "+" + s2.ToString());
             string dataFields = args.Aggregate("", (s, modifier) => s + modifier.ToString());
             string url = String.Format(baseUrl, stockNames, dataFields);
             using (WebResponse response = WebRequest.Create(url).GetResponse())
