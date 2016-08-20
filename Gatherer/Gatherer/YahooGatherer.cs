@@ -17,10 +17,11 @@ namespace Gatherers
         private Timer timer;
 
         private string[] data;
+        public string[] history_data;
         public string[] CurrentData { get { return data; } }
 
         public event EventHandler DataUpdated;
-
+       
         public YahooGatherer(int updatePeriod, IEnumerable<Stock> enumerable, params Stock[] args)
         {
             this.timer = new Timer(updatePeriod);
@@ -56,7 +57,13 @@ namespace Gatherers
                 parser.Delimiters = new[] { "," };
                 parser.HasFieldsEnclosedInQuotes = true;
                 return parser.ReadFields();
+
             }
+        }
+
+        public void SingleUpdateStocksData()
+        {
+            history_data = GetFromYahoo(new DataModifiers[] { DataModifiers.b2, DataModifiers.b3 });
         }
 
         private void UpdateStocksData(object sender, ElapsedEventArgs args)
@@ -116,5 +123,7 @@ namespace Gatherers
             [Description("day's value change")]
             w4
         }
+
+       
     }
 }
