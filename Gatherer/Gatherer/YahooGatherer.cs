@@ -51,19 +51,19 @@ namespace Gatherers
             string url = String.Format(baseUrl, stockNames, dataFields);
             using (WebResponse response = WebRequest.Create(url).GetResponse())
             using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-            using (TextFieldParser parser = new TextFieldParser(reader))
+            //using (TextFieldParser parser = new TextFieldParser(reader))
             {
+                // TODO: replace old csv parser with somethng that works
                 List<string> results = new List<string>();
-                parser.Delimiters = new[] { "," };
-                parser.HasFieldsEnclosedInQuotes = true;
-                return parser.ReadFields();
+                Console.WriteLine("Reading: ");
+                Console.WriteLine(reader.ReadToEnd());
+                Console.WriteLine("Done");
+                return new string[0];
+                //parser.Delimiters = new[] { "," };
+                //parser.HasFieldsEnclosedInQuotes = true;
+                //return parser.ReadFields();
 
             }
-        }
-
-        public void SingleUpdateStocksData()
-        {
-            history_data = GetFromYahoo(new DataModifiers[] { DataModifiers.b2, DataModifiers.b3 });
         }
 
         private void UpdateStocksData(object sender, ElapsedEventArgs args)
@@ -77,6 +77,7 @@ namespace Gatherers
             }
             catch (Exception e)
             {
+                Console.WriteLine("Fuck it all");
                 // TODO: log error   
             }
         }

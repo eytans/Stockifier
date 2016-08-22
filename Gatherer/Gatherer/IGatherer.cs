@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Gatherers
 {
-    interface IGatherer
+    public interface IGatherer
     {
         event EventHandler DataUpdated;
     }
