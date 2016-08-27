@@ -7,6 +7,7 @@ using System.Net;
 using System.Timers;
 using Microsoft.VisualBasic.FileIO;
 using Stock = System.String;
+using CsvHelper;
 
 namespace Gatherers
 {
@@ -50,12 +51,10 @@ namespace Gatherers
             string url = String.Format(baseUrl, stockNames, dataFields);
             using (WebResponse response = WebRequest.Create(url).GetResponse())
             using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-            using (TextFieldParser parser = new TextFieldParser(reader))
             {
-                List<string> results = new List<string>();
-                parser.Delimiters = new[] { "," };
-                parser.HasFieldsEnclosedInQuotes = true;
-                return parser.ReadFields();
+                CsvParser csv = new CsvParser(reader);
+                csv.Configuration.HasHeaderRecord = true;
+                return csv.Read();
             }
         }
 
