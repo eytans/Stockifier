@@ -42,7 +42,7 @@ namespace Gatherers.Tests
             {
                 System.Threading.Thread.Sleep(50);
             }
-            Console.WriteLine(results.First().ToString());
+            Console.WriteLine(String.Join(",", results.First()));
         }
     }
 }
