@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Gatherers.Tests
 {
     [TestClass()]
-    public class GatherersTests
+    public class YahooGathererRTTests
     {
         private Gatherers.IGatherer gatherer;
         private List<String[]> results;
@@ -18,7 +18,7 @@ namespace Gatherers.Tests
         public void SetUp()
         {
             results = new List<string[]>();
-            gatherer = new YahooGatherer(300, new System.Collections.Generic.LinkedList<string>(), "AAPL", "MSFT", "GOOG");
+            gatherer = new YahooGathererRT(300, new System.Collections.Generic.LinkedList<string>(), "AAPL", "MSFT", "GOOG");
             gatherer.DataUpdated += Gatherer_DataUpdated;
         }
 
@@ -32,7 +32,7 @@ namespace Gatherers.Tests
 
         private void Gatherer_DataUpdated(object sender, EventArgs e)
         {
-            results.Add(((YahooGatherer)sender).CurrentData);
+            results.Add(((YahooGathererRT)sender).CurrentData);
         }
 
         [TestMethod(),Timeout(10000)]
