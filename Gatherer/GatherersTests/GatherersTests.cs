@@ -36,10 +36,10 @@ namespace Gatherers.Tests
 
         protected void Gatherer_DataUpdated(object sender, EventArgs e)
         {
-            results.Add(((YahooGathererRT)sender).CurrentData);
+            results.Add(((YahooGatherer)sender).CurrentData);
         }
 
-        [TestMethod(), Timeout(10000)]
+        [TestMethod(), Timeout(60000)]
         public void WebTest()
         {
             while (this.results.Count == 0)
