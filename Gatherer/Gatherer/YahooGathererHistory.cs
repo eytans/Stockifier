@@ -14,10 +14,16 @@ namespace Gatherer
 {
     public class YahooGathererHistory : YahooGatherer
     {
-        protected override ICollection<string> GetModifiers() 
+        public YahooGathererHistory(int updatePeriod, ICollection<string> stockNames) : base(updatePeriod, stockNames)
         {
-            return Enum.GetValues(typeof(DataModifiers)).Cast<string>().ToList<string>();
+
         }
+
+        protected override ICollection<string> GetModifiers()
+        {
+            return EnumsToString<DataModifiers>();
+        }
+
         public enum DataModifiers
         {
             [Description("ask")]

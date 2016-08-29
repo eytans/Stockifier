@@ -5,44 +5,80 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Gatherer;
 
 namespace Gatherers.Tests
 {
     [TestClass()]
-    public class YahooGathererRTTests
+    abstract public class YahooGathererTests
     {
-        private Gatherers.IGatherer gatherer;
-        private List<String[]> results;
+        protected Gatherers.IGatherer gatherer;
+        protected List<String[]> results;
 
-        [TestInitialize()]
-        public void SetUp()
+        abstract public void SetUp();
+        abstract public void TearDown();
+
+        public void ReadyData(Func<int, ICollection<string>, IGatherer> creator)
         {
+            List<string> stockNames = new List<string>(new string[] { "AAPL", "MSFT", "GOOG" });
             results = new List<string[]>();
-            gatherer = new YahooGathererRT(300, new System.Collections.Generic.LinkedList<string>(), "AAPL", "MSFT", "GOOG");
+            gatherer = creator(300, stockNames);
             gatherer.DataUpdated += Gatherer_DataUpdated;
         }
-
-        [TestCleanup()]
-        public void TearDown()
+        
+    
+        public void RemoveData()
         {
             gatherer.DataUpdated -= Gatherer_DataUpdated;
             gatherer = null;
             results = null;
         }
 
-        private void Gatherer_DataUpdated(object sender, EventArgs e)
+        protected void Gatherer_DataUpdated(object sender, EventArgs e)
         {
             results.Add(((YahooGathererRT)sender).CurrentData);
         }
 
-        [TestMethod(),Timeout(10000)]
+        [TestMethod(), Timeout(10000)]
         public void WebTest()
         {
-            while(this.results.Count == 0)
+            while (this.results.Count == 0)
             {
                 System.Threading.Thread.Sleep(50);
             }
             Console.WriteLine(String.Join(",", results.First()));
+        }
+    }
+
+    [TestClass()]
+    public class YahooGathererRTTests : YahooGathererTests
+    {
+        [TestInitialize()]
+        override public void SetUp()
+        {
+            ReadyData((int i, ICollection<string> c) => new YahooGathererRT(i, c));
+        }
+
+        [TestCleanup()]
+        override public void TearDown()
+        {
+            RemoveData();
+        }
+    }
+
+    [TestClass()]
+    public class YahooGathererHistoryTests : YahooGathererTests
+    {
+        [TestInitialize()]
+        override public void SetUp()
+        {
+            ReadyData((int i, ICollection<string> c) => new YahooGathererHistory(i, c));
+        }
+
+        [TestCleanup()]
+        override public void TearDown()
+        {
+            RemoveData();
         }
     }
 }

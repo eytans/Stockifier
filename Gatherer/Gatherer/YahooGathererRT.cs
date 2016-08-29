@@ -20,7 +20,7 @@ namespace Gatherers
 
         protected override ICollection<string> GetModifiers()
         {
-            return Enum.GetValues(typeof(DataModifiers)).Cast<string>().ToList<string>();
+            return EnumsToString<DataModifiers>();
         }
 
         public enum DataModifiers
