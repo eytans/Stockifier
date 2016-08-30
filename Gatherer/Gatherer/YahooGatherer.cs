@@ -21,7 +21,6 @@ namespace Gatherer
         protected abstract ICollection<string> GetModifiers();
 
         private string[] data;
-        public string[] history_data;
         public string[] CurrentData { get { return data; } }
 
 
@@ -46,6 +45,11 @@ namespace Gatherer
         public YahooGatherer(IEnumerable<Stock> enumerable, params Stock[] args) : this(100, enumerable, args) { }
 
         public YahooGatherer(params Stock[] args) : this(null, args) { }
+
+        protected void Clear()
+        {
+            this.DataUpdated = null;
+        }
 
         private string[] GetFromYahoo()
         {

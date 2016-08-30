@@ -72,7 +72,7 @@ namespace Gatherers.Tests
         [TestInitialize()]
         override public void SetUp()
         {
-            ReadyData((int i, ICollection<string> c) => new YahooGathererHistory(i, c));
+            ReadyData((int i, ICollection<string> c) => new YahooGathererDaily(i, c));
         }
 
         [TestCleanup()]
