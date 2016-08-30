@@ -30,8 +30,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CsvHelper, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
-      <HintPath>..\packages\CsvHelper.2.16.0.0\lib\net45\CsvHelper.dll</HintPath>
+    <Reference Include="CsvHelper, Version=3.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
+      <HintPath>..\packages\CsvHelper.3.0.0-beta2\lib\net45\CsvHelper.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
@@ -47,9 +47,10 @@
   <ItemGroup>
     <Compile Include="IGatherer.cs" />
     <Compile Include="YahooGatherer.cs" />
+    <Compile Include="YahooGathererHistory.cs" />
     <Compile Include="YahooGathererRT.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="YahooGathererHistory.cs" />
+    <Compile Include="YahooGathererDaily.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

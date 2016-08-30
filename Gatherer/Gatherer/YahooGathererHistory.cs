@@ -40,6 +40,7 @@ namespace Gatherer
                     if (row == null)
                         break;
                     data.Add(row);
+                    row = csv.Read();
                 }
             }
         }
