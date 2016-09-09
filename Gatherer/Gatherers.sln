@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gatherers", "Gatherer\Gathe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GatherersTests", "GatherersTests\GatherersTests.csproj", "{31523DB0-B6A4-4BC3-85D9-94E61FE42F44}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "stockDB", "..\stockDB\stockDB\stockDB.csproj", "{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{31523DB0-B6A4-4BC3-85D9-94E61FE42F44}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31523DB0-B6A4-4BC3-85D9-94E61FE42F44}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31523DB0-B6A4-4BC3-85D9-94E61FE42F44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
