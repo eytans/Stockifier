@@ -67,7 +67,7 @@ namespace Gatherers.Tests
     }
 
     [TestClass()]
-    public class YahooGathererHistoryTests : YahooGathererTests
+    public class YahooGathererDailyTests : YahooGathererTests
     {
         [TestInitialize()]
         override public void SetUp()

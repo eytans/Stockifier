@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Timers;
-using Stock = System.String;
 using CsvHelper;
 using Gatherer;
 

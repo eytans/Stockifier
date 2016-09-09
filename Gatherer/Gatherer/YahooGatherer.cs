@@ -9,13 +9,13 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
-using Stock = System.String;
+
 
 namespace Gatherer
 {
     public abstract class YahooGatherer : IGatherer
     {
-        private ICollection<Stock> stocks;
+        private ICollection<string> stocks;
         private Timer timer;
 
         protected abstract ICollection<string> GetModifiers();
@@ -26,25 +26,25 @@ namespace Gatherer
 
         public event EventHandler DataUpdated;
 
-        public YahooGatherer(int updatePeriod, IEnumerable<Stock> enumerable, params Stock[] args)
+        public YahooGatherer(int updatePeriod, IEnumerable<string> enumerable, params string[] args)
         {
             this.timer = new Timer(updatePeriod);
 
-            stocks = new List<Stock>();
+            stocks = new List<string>();
             if (enumerable != null)
-                foreach (Stock s in enumerable)
+                foreach (string s in enumerable)
                     stocks.Add(s);
 
-            foreach (Stock s in args)
+            foreach (string s in args)
                 stocks.Add(s);
 
             timer.Elapsed += UpdateStocksData;
             timer.Start();
         }
 
-        public YahooGatherer(IEnumerable<Stock> enumerable, params Stock[] args) : this(100, enumerable, args) { }
+        public YahooGatherer(IEnumerable<string> enumerable, params string[] args) : this(100, enumerable, args) { }
 
-        public YahooGatherer(params Stock[] args) : this(null, args) { }
+        public YahooGatherer(params string[] args) : this(null, args) { }
 
         protected void Clear()
         {
