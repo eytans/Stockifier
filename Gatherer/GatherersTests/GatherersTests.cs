@@ -6,9 +6,43 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Gatherer;
+using System.Data.Entity;
 
 namespace Gatherers.Tests
 {
+    [TestClass()]
+    public class GatherersTests
+    {
+        public class Testing
+        {
+            [System.ComponentModel.DataAnnotations.Key]
+            public int id { get; set; }
+            public Dictionary<string, int> dicty  { get; set; }
+            public Testing()
+            {
+                dicty = new Dictionary<string, int>();
+            }
+        }
+
+        public class TestContext : DbContext
+        {
+            public DbSet<Testing> Daily { get; set; }
+        }
+
+        [TestMethod()]
+        public void WebTestNotRealTime()
+        {
+            using(var db = new TestContext())
+            {
+                Testing t = new Testing();
+                t.id = 3;
+                t.dicty.Add("key", 0);
+                db.Daily.Add(t);
+                db.SaveChanges();
+            }
+        }
+    }
+
     [TestClass()]
     abstract public class YahooGathererTests
     {
