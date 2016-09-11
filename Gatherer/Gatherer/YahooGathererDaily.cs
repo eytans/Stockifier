@@ -18,7 +18,7 @@ namespace Gatherer
 
         }
 
-        protected override ICollection<string> GetModifiers()
+        protected override IList<string> GetModifiers()
         {
             return EnumsToString<DataModifiers>();
         }

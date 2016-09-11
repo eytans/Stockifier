@@ -18,13 +18,17 @@ namespace Gatherer
         private ICollection<string> stocks;
         private Timer timer;
 
-        protected abstract ICollection<string> GetModifiers();
+        protected abstract IList<string> GetModifiers();
 
-        private string[] data;
-        public string[] CurrentData { get { return data; } }
+        private SortedDictionary<string, string> data;
+        public string[] CurrentData { get
+            {
+                return data.Values.ToArray();
+            }
+        }
 
 
-        public event EventHandler DataUpdated;
+        public event EventHandler<DataUpdatedArgs> DataUpdated;
 
         public YahooGatherer(int updatePeriod, IEnumerable<string> enumerable, params string[] args)
         {
@@ -51,20 +55,27 @@ namespace Gatherer
             this.DataUpdated = null;
         }
 
-        private string[] GetFromYahoo()
+        private SortedDictionary<string, string> GetFromYahoo()
         {
             
             string baseUrl = "http://finance.yahoo.com/d/quotes.csv?s={0}&f={1}";
             // TODO: probably change ToString to GetName or Name
             string stockNames = stocks.Skip(1).Aggregate(stocks.First().ToString(), (s1, s2) => s1 + "+" + s2.ToString());
-            string dataFields = GetModifiers().Aggregate("", (s, modifier) => s + modifier);
+            IList<string> modifiers = GetModifiers();
+            string dataFields = modifiers.Aggregate("", (s, modifier) => s + modifier);
             string url = String.Format(baseUrl, stockNames, dataFields);
             using (WebResponse response = WebRequest.Create(url).GetResponse())
             using (StreamReader reader = new StreamReader(response.GetResponseStream()))
             {
                 CsvParser csv = new CsvParser(reader);
                 csv.Configuration.HasHeaderRecord = true;
-                return csv.Read();
+                string[] row = csv.Read();
+                SortedDictionary<string, string> result = new SortedDictionary<string, string>();
+                for(int i = 0; i < row.Length; i++)
+                {
+                    result.Add(modifiers.ElementAt(i), row[i]);
+                }
+                return result;
             }
         }
 
@@ -75,7 +86,8 @@ namespace Gatherer
             {
                 // TODO: make this better
                 data = GetFromYahoo();
-                DataUpdated(this, EventArgs.Empty);
+                DataUpdatedArgs results = new DataUpdatedArgs(data);
+                DataUpdated(this, results);
             }
             catch (Exception e)
             {
@@ -84,7 +96,7 @@ namespace Gatherer
             }
         }
 
-        protected static ICollection<string> EnumsToString<T>() where T : struct, IConvertible
+        protected static IList<string> EnumsToString<T>() where T : struct, IConvertible
         {
             if (!typeof(T).IsEnum)
             {

@@ -73,7 +73,7 @@ namespace Gatherers.Tests
             results.Add(((YahooGatherer)sender).CurrentData);
         }
 
-        [TestMethod(), Timeout(60000)]
+        [TestMethod(), Timeout(5000)]
         public void WebTest()
         {
             while (this.results.Count == 0)
@@ -113,6 +113,35 @@ namespace Gatherers.Tests
         override public void TearDown()
         {
             RemoveData();
+        }
+    }
+
+    [TestClass()]
+    public class YahooGathererDictEventArgs : YahooGathererTests
+    {
+        protected void CheckDict(object sender, DataUpdatedArgs args)
+        {
+            Assert.IsTrue(args.Values.Count > 0);
+            foreach (var keyVal in args.Values)
+                Console.WriteLine("Key = " + keyVal.Key + " Val = " + keyVal.Value);
+            results.Add(new string[] { "What ever" });
+        }
+
+        [TestInitialize()]
+        override public void SetUp()
+        {
+            results = new List<string[]>();
+            List<string> stockNames = new List<string>(new string[] { "AAPL", "MSFT", "GOOG" });
+            gatherer = new YahooGathererRT(300, stockNames);
+            gatherer.DataUpdated += CheckDict;
+        }
+
+        [TestCleanup()]
+        override public void TearDown()
+        {
+            gatherer.DataUpdated -= CheckDict;
+            gatherer = null;
+            results = null;
         }
     }
 }
