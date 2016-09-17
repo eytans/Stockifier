@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NLog;
+using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
@@ -7,8 +8,33 @@ using System.Threading.Tasks;
 
 namespace Gatherer
 {
-    public class StockDaily
+    public abstract class StockBase
     {
+        protected static Logger logger = LogManager.GetCurrentClassLogger();
+
+        public StockBase(IDictionary<string, string> data)
+        {
+            foreach (var prop in this.GetType().GetProperties())
+            {
+                if (prop.Name == "Time") continue;
+                    
+                try
+                {
+                    prop.SetValue(this, data[prop.Name]);
+                }
+                catch(Exception e)
+                {
+                    logger.Error(e, "Failed to set property " + prop.Name);
+                    throw e;
+                }
+            }
+        }
+    }
+
+    public class StockDaily : StockBase
+    {
+        public StockDaily(IDictionary<string, string> data) : base(data) { }
+
         [System.ComponentModel.DataAnnotations.Key]
         public string Time { get; set; }
         public string a { get; set; }
@@ -82,10 +108,13 @@ namespace Gatherer
         public string x { get; set; }
         public string y { get; set; }
     }
-    public class StockRT
+
+    public class StockRT : StockBase
     {
+        public StockRT(IDictionary<string, string> data) : base(data) { }
+
         [System.ComponentModel.DataAnnotations.Key]
-        public string TimeStamp { get; set; }
+        public string Time { get; set; }
         public string b2 { get; set; }
         public string b3 { get; set; }
         public string c6 { get; set; }
