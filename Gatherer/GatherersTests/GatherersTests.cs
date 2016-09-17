@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Gatherer;
 using System.Data.Entity;
+using NLog;
 
 namespace Gatherers.Tests
 {
@@ -29,7 +30,7 @@ namespace Gatherers.Tests
             public DbSet<Testing> Daily { get; set; }
         }
 
-        [TestMethod()]
+        [TestMethod(), Timeout(5000)]
         public void WebTestNotRealTime()
         {
             using(var db = new TestContext())
@@ -46,6 +47,8 @@ namespace Gatherers.Tests
     [TestClass()]
     abstract public class YahooGathererTests
     {
+        protected static Logger logger = LogManager.GetCurrentClassLogger();
+
         protected Gatherers.IGatherer gatherer;
         protected List<String[]> results;
 
@@ -80,7 +83,7 @@ namespace Gatherers.Tests
             {
                 System.Threading.Thread.Sleep(50);
             }
-            Console.WriteLine(String.Join(",", results.First()));
+            YahooGathererTests.logger.Info(String.Join(",", results.First()));
         }
     }
 
@@ -119,14 +122,6 @@ namespace Gatherers.Tests
     [TestClass()]
     public class YahooGathererDictEventArgs : YahooGathererTests
     {
-        protected void CheckDict(object sender, DataUpdatedArgs args)
-        {
-            Assert.IsTrue(args.Values.Count > 0);
-            foreach (var keyVal in args.Values)
-                Console.WriteLine("Key = " + keyVal.Key + " Val = " + keyVal.Value);
-            results.Add(new string[] { "What ever" });
-        }
-
         [TestInitialize()]
         override public void SetUp()
         {
@@ -142,6 +137,14 @@ namespace Gatherers.Tests
             gatherer.DataUpdated -= CheckDict;
             gatherer = null;
             results = null;
+        }
+
+        protected void CheckDict(object sender, DataUpdatedArgs args)
+        {
+            Assert.IsTrue(args.Values.Count > 0);
+            foreach (var keyVal in args.Values)
+                Console.WriteLine("Key = " + keyVal.Key + " Val = " + keyVal.Value);
+            results.Add(new string[] { "What ever" });
         }
     }
 }
