@@ -1,4 +1,5 @@
 ﻿using CsvHelper;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +12,8 @@ namespace Gatherer
 {
     public class YahooGathererHistory
     {
+        protected static Logger logger = LogManager.GetCurrentClassLogger();
+
         private string stock;
         private DateTime from;
         private DateTime to;
@@ -21,7 +24,15 @@ namespace Gatherer
             this.stock = stock;
             this.from = from;
             this.to = to;
-            GetFromYahoo();
+            try
+            {
+                logger.Info("Collecting history data from yahoo between " + from.ToString() + " to " + to.ToString() + ".");
+                GetFromYahoo();
+            }
+            finally
+            {
+                logger.Info("Got " + data.Count.ToString() + " days of data.");
+            }
         }
 
         // Warning: this is copy pase from YahooGatherer but only for one run

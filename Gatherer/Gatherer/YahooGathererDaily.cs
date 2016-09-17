@@ -1,4 +1,5 @@
 ﻿using CsvHelper;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,6 +14,15 @@ namespace Gatherer
 {
     public class YahooGathererDaily : YahooGatherer
     {
+        static YahooGathererDaily()
+        {
+            logger.Info("Yahoo daily gatherers modifiers are: ");
+            foreach(string s in EnumsToString<DataModifiers>())
+            {
+                logger.Info(s);
+            }
+        }
+
         public YahooGathererDaily(int updatePeriod, ICollection<string> stockNames) : base(updatePeriod, stockNames)
         {
 

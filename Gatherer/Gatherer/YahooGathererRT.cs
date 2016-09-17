@@ -10,9 +10,17 @@ using Gatherer;
 
 namespace Gatherers
 {
-
     public class YahooGathererRT : YahooGatherer
     {
+        static YahooGathererRT()
+        {
+            logger.Info("Yahoo RT gatherers modifiers are: ");
+            foreach (string s in EnumsToString<DataModifiers>())
+            {
+                logger.Info(s);
+            }
+        }
+
         public YahooGathererRT(int updatePeriod, IEnumerable<string> enumerable, params string[] args) : base(updatePeriod, enumerable, args)
         {
         }

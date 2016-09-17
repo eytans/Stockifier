@@ -6,21 +6,32 @@ using System.Threading.Tasks;
 
 namespace Gatherers
 {
+    using UpdateDataType = IDictionary<string, IDictionary<string, string>>;
     public class DataUpdatedArgs : EventArgs
     {
-        public DataUpdatedArgs(IDictionary<string, string> input) : this()
+        private SortedDictionary<string, Dictionary<string, string>> result;
+
+        public DataUpdatedArgs(UpdateDataType input) : this()
         {
-            foreach (KeyValuePair<string, string> entry in input)
+            foreach (string key in input.Keys)
             {
-                Values.Add(entry.Key, entry.Value);
+                if (!Values.ContainsKey(key))
+                {
+                    Values.Add(key, new Dictionary<string, string>());
+                }
+                foreach (KeyValuePair<string, string> entry in input[key])
+                {
+                    Values[key].Add(entry.Key, entry.Value);
+                }
             }
         }
 
         public DataUpdatedArgs()
         {
-            Values = new Dictionary<string, string>();
+            Values = new Dictionary<string, IDictionary<string, string>>();
         }
-        public Dictionary<string, string> Values { get; }
+
+        public UpdateDataType Values { get; }
     }
 
     public interface IGatherer
