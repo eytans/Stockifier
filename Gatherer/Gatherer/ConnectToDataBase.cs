@@ -152,6 +152,34 @@ namespace Gatherer
         public StockTabelsContext Tables { get; set; }
         public StockContext(string StockName) { this.StockName = StockName; }
     }
+
+    public class StocksCollection
+    {
+        public Dictionary<string, StockContext> Stocks = new Dictionary<string, StockContext>();
+        public void addStock(string newMame)
+        {
+            if (Stocks.ContainsKey(newMame)){
+                Console.WriteLine("stock context already exist");
+                return;
+            } 
+            StockContext newStock = new StockContext(newMame);
+            Stocks.Add(newMame, newStock);
+        }
+        public void removeStock(string toRemoveName)
+        {
+            Stocks.Remove(toRemoveName);
+        }
+        public StockContext getStockContext(string stockName)
+        {
+            if (!Stocks.ContainsKey(stockName))
+            {
+                Console.WriteLine("stock context not exist");
+                return null;
+            }
+            return Stocks[stockName];
+        }
+
+    }
 }
 
 //public class StockGeneralData
