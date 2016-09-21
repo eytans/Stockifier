@@ -100,7 +100,6 @@ namespace Gatherer
         public string r5 { get; set; }
         public string r6 { get; set; }
         public string r7 { get; set; }
-        public string s { get; set; }
         public string s1 { get; set; }
         public string s7 { get; set; }
         public string t1 { get; set; }

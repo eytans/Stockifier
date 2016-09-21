@@ -204,9 +204,9 @@ Key = v1 Val = N/A
 Key = w Val = 589.38 - 789.87
 Key = w1 Val = N/A
 Key = x Val = NMS
-Key = y Val = N/A";
-        static readonly string dictionaryMicrosoftDailyString = @"Key = Time Val = 636100939241159081
-Key = a Val = 57.6700
+Key = y Val = N/A
+Key = Time Val = 636100939241159081";
+        static readonly string dictionaryMicrosoftDailyString = @"Key = a Val = 57.6700
 Key = a2 Val = 28361400
 Key = a5 Val = 5100
 Key = b Val = 57.6600
