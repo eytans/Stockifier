@@ -11,13 +11,12 @@ namespace Gatherer
     public abstract class StockBase
     {
         public string n { get; set; }
+        public string s { get; set; }
         public string Time { get; set; }
-        [System.ComponentModel.DataAnnotations.Key]
-        public string Key { get; set; }
         protected static Logger logger = LogManager.GetCurrentClassLogger();
-        public string getAnsi()
+        public string GetAnsi()
         {
-            return n;
+            return s;
         }
         public StockBase(IDictionary<string, string> data)
         {
@@ -37,14 +36,14 @@ namespace Gatherer
                     throw e;
                 }
             }
-            Key = n + Time;
         }
     }
 
     public class StockDaily : StockBase
     {
-        public StockDaily(IDictionary<string, string> data) : base(data) { }
-        
+        public StockDaily(IDictionary<string, string> data) : base(data) { Key = GetAnsi() + Time; }
+        [System.ComponentModel.DataAnnotations.Key]
+        public string Key { get; set; }
         public string a { get; set; }
         public string a2 { get; set; }
         public string a5 { get; set; }
@@ -119,9 +118,10 @@ namespace Gatherer
     public class StockRT : StockBase
     {
         
-        public StockRT(IDictionary<string, string> data) : base(data) { }
+        public StockRT(IDictionary<string, string> data) : base(data) { Key = GetAnsi() + Time; }
 
         [System.ComponentModel.DataAnnotations.Key]
+        public string Key { get; set; }
         public string b2 { get; set; }
         public string b3 { get; set; }
         public string c6 { get; set; }

@@ -12,6 +12,7 @@ namespace Gatherer.Tests
     [TestClass()]
     public class StockTests
     {
+
         protected static Logger logger = LogManager.GetCurrentClassLogger();
 
         static readonly string dictionaryRTString = @"Key = b2 Val = N / A
@@ -101,6 +102,8 @@ Key = x Val = NMS
 Key = y Val = 2.04
 Key = Time Val = 500";
 
+
+
         private string[] Split(string source, string sep)
         {
             return source.Split(new string[] { sep }, StringSplitOptions.None);
@@ -123,11 +126,14 @@ Key = Time Val = 500";
         [TestMethod()]
         public void StockRTTest()
         {
+            logger.Info("started RT test");
             SetUp(dictionaryRTString);
             StockRT appleRt = new StockRT(singleData);
             StockRT msRt = new StockRT(singleData);
             using (var db = new StockTabelsContext())
             {
+                db.Database.Delete();
+                db.SaveChanges();
                 db.RT.Add(appleRt);
                 db.RT.Add(msRt);
                 db.SaveChanges();
@@ -142,6 +148,8 @@ Key = Time Val = 500";
             StockDaily msDaily = new StockDaily(singleData);
             using (var db = new StockTabelsContext())
             {
+                db.Database.Delete();
+                db.SaveChanges();
                 db.Daily.Add(appleDaily);
                 db.Daily.Add(msDaily);
                 db.SaveChanges();
