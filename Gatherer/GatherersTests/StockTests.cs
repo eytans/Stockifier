@@ -309,13 +309,17 @@ Key = Time Val = 636100939241159081";
             StockRT msRt = new StockRT(singleData);
             using (var db = new StockTabelsContext())
             {
-                db.Database.Delete();
-                db.SaveChanges();
+                StockRT temp = db.RT.Find(appleRt.Key);
+                if (temp != null) { db.RT.Remove(temp); }
                 db.RT.Add(appleRt);
+                temp = db.RT.Find(msRt.Key);
+                if (temp != null) { db.RT.Remove(temp); }
                 db.RT.Add(msRt);
                 db.SaveChanges();
             }
         }
+
+
 
         [TestMethod()]
         public void StockDailyTest()
@@ -326,9 +330,11 @@ Key = Time Val = 636100939241159081";
             StockDaily msDaily = new StockDaily(singleData);
             using (var db = new StockTabelsContext())
             {
-                db.Database.Delete();
-                db.SaveChanges();
+                StockDaily temp = db.Daily.Find(appleDaily.Key);
+                if (temp != null) { db.Daily.Remove(temp); }
                 db.Daily.Add(appleDaily);
+                temp = db.Daily.Find(msDaily.Key);
+                if (temp != null) { db.Daily.Remove(temp); }
                 db.Daily.Add(msDaily);
                 db.SaveChanges();
             }

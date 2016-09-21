@@ -18,6 +18,7 @@ namespace Gatherer
         {
             return s;
         }
+        protected StockBase() { }
         public StockBase(IDictionary<string, string> data)
         {
             foreach (var prop in this.GetType().GetProperties())
@@ -41,6 +42,7 @@ namespace Gatherer
 
     public class StockDaily : StockBase
     {
+        private StockDaily() { }
         public StockDaily(IDictionary<string, string> data) : base(data) { Key = GetAnsi() + Time; }
         [System.ComponentModel.DataAnnotations.Key]
         public string Key { get; set; }
@@ -116,7 +118,7 @@ namespace Gatherer
 
     public class StockRT : StockBase
     {
-        
+        private StockRT() { }
         public StockRT(IDictionary<string, string> data) : base(data) { Key = GetAnsi() + Time; }
 
         [System.ComponentModel.DataAnnotations.Key]
