@@ -221,7 +221,8 @@ namespace Gatherer.Tests
         protected void CheckDict(object sender, DataUpdatedArgs args)
         {
             Assert.IsTrue(args.Values.Count > 0);
-            foreach (var keyVal in args.Values)
+            foreach (var stockDictonary in args.Values)
+                foreach(var keyVal in stockDictonary.Value)
                 Console.WriteLine("Key = " + keyVal.Key + " Val = " + keyVal.Value);
             results.Add(new string[] { "What ever" });
         }

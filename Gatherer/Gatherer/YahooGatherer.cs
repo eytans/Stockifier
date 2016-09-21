@@ -22,7 +22,7 @@ namespace Gatherer
 
         protected abstract IList<string> GetModifiers();
 
-        private DataUpdatedArgs data;
+        private DataUpdatedArgs data = new DataUpdatedArgs(new SortedDictionary<string, IDictionary<string, string>>());
         public string[] CurrentData { get
             {
                 var temp = data.Values;
@@ -79,14 +79,15 @@ namespace Gatherer
             using (WebResponse response = WebRequest.Create(url).GetResponse())
             using (StreamReader reader = new StreamReader(response.GetResponseStream()))
             {
+                DateTime now = DateTime.Now;
                 CsvParser csv = new CsvParser(reader);
                 csv.Configuration.HasHeaderRecord = true;
                 IDictionary<string, IDictionary<string, string>> result = (IDictionary<string, IDictionary<string, string>>) 
                     new SortedDictionary<string, IDictionary<string, string>>();
-                int j = 0;
                 foreach(string stockName in stocks)
                 {
                     string[] row = csv.Read();
+                    if (row == null) continue;
                     if (!result.ContainsKey(stockName))
                     {
                         result.Add(stockName, new Dictionary<string, string>());
@@ -96,6 +97,7 @@ namespace Gatherer
                     {
                         result[stockName].Add(modifiers.ElementAt(i), row[i]);
                     }
+                    result[stockName].Add("Time", now.Ticks.ToString());
                 }
                 logger.Debug("Done receiving data from csv.");
                 return new DataUpdatedArgs(result);

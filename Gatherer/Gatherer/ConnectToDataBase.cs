@@ -11,16 +11,22 @@ namespace Gatherer
     public abstract class StockBase
     {
         public string n { get; set; }
+        public string Time { get; set; }
+        [System.ComponentModel.DataAnnotations.Key]
+        public string Key { get; set; }
         protected static Logger logger = LogManager.GetCurrentClassLogger();
         public string getAnsi()
         {
             return n;
-        } 
+        }
         public StockBase(IDictionary<string, string> data)
         {
             foreach (var prop in this.GetType().GetProperties())
             {
-                if (prop.Name == "Time") continue;
+                if (prop.Name.Equals("Key"))
+                {
+                    continue;
+                }
                 try
                 {
                     prop.SetValue(this, data[prop.Name]);
@@ -31,15 +37,14 @@ namespace Gatherer
                     throw e;
                 }
             }
+            Key = n + Time;
         }
     }
 
     public class StockDaily : StockBase
     {
         public StockDaily(IDictionary<string, string> data) : base(data) { }
-
-        [System.ComponentModel.DataAnnotations.Key]
-        public string Time { get; set; }
+        
         public string a { get; set; }
         public string a2 { get; set; }
         public string a5 { get; set; }
@@ -117,7 +122,6 @@ namespace Gatherer
         public StockRT(IDictionary<string, string> data) : base(data) { }
 
         [System.ComponentModel.DataAnnotations.Key]
-        public string Time { get; set; }
         public string b2 { get; set; }
         public string b3 { get; set; }
         public string c6 { get; set; }
