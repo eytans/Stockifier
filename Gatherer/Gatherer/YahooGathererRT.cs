@@ -6,9 +6,8 @@ using System.Linq;
 using System.Net;
 using System.Timers;
 using CsvHelper;
-using Gatherer;
 
-namespace Gatherers
+namespace Gatherer
 {
     public class YahooGathererRT : YahooGatherer
     {

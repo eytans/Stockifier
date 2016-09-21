@@ -1,5 +1,4 @@
 ﻿using CsvHelper;
-using Gatherers;
 using NLog;
 using System;
 using System.Collections.Generic;

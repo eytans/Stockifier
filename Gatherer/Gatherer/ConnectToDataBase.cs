@@ -155,20 +155,25 @@ namespace Gatherer
 
     public class StocksCollection
     {
+        protected static Logger logger = LogManager.GetCurrentClassLogger();
+
         public Dictionary<string, StockContext> Stocks = new Dictionary<string, StockContext>();
-        public void addStock(string newMame)
+
+        public void addStock(string name)
         {
-            if (Stocks.ContainsKey(newMame)){
-                Console.WriteLine("stock context already exist");
+            if (Stocks.ContainsKey(name)){
+                logger.Warn("stock context already exist");
                 return;
             } 
-            StockContext newStock = new StockContext(newMame);
-            Stocks.Add(newMame, newStock);
+            StockContext newStock = new StockContext(name);
+            Stocks.Add(name, newStock);
         }
-        public void removeStock(string toRemoveName)
+
+        public void removeStock(string name)
         {
-            Stocks.Remove(toRemoveName);
+            Stocks.Remove(name);
         }
+
         public StockContext getStockContext(string stockName)
         {
             if (!Stocks.ContainsKey(stockName))

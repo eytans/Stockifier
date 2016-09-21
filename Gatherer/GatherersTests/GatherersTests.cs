@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Gatherers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +8,7 @@ using Gatherer;
 using System.Data.Entity;
 using NLog;
 
-namespace Gatherers.Tests
+namespace Gatherer.Tests
 {
     [TestClass()]
     public class GatherersTests
@@ -49,7 +48,7 @@ namespace Gatherers.Tests
     {
         protected static Logger logger = LogManager.GetCurrentClassLogger();
 
-        protected Gatherers.IGatherer gatherer;
+        protected IGatherer gatherer;
         protected List<String[]> results;
 
         abstract public void SetUp();
