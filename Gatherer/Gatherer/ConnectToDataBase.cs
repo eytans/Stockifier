@@ -10,14 +10,17 @@ namespace Gatherer
 {
     public abstract class StockBase
     {
+        public string n { get; set; }
         protected static Logger logger = LogManager.GetCurrentClassLogger();
-
-        public StockBase(IDictionary<string, string> data,string ansi)
+        public string getAnsi()
+        {
+            return n;
+        } 
+        public StockBase(IDictionary<string, string> data)
         {
             foreach (var prop in this.GetType().GetProperties())
             {
                 if (prop.Name == "Time") continue;
-                if (prop.Name == "StockAnsi") prop.SetValue(this, ansi);  
                 try
                 {
                     prop.SetValue(this, data[prop.Name]);
@@ -33,11 +36,10 @@ namespace Gatherer
 
     public class StockDaily : StockBase
     {
-        public StockDaily(IDictionary<string, string> data,string ansi) : base(data,ansi) { }
+        public StockDaily(IDictionary<string, string> data) : base(data) { }
 
         [System.ComponentModel.DataAnnotations.Key]
         public string Time { get; set; }
-        public string StockAnsi { get; set; }
         public string a { get; set; }
         public string a2 { get; set; }
         public string a5 { get; set; }
@@ -81,7 +83,6 @@ namespace Gatherer
         public string m6 { get; set; }
         public string m7 { get; set; }
         public string m8 { get; set; }
-        public string n { get; set; }
         public string n4 { get; set; }
         public string o { get; set; }
         public string p { get; set; }
@@ -113,11 +114,10 @@ namespace Gatherer
     public class StockRT : StockBase
     {
         
-        public StockRT(IDictionary<string, string> data, string ansi) : base(data, ansi) { }
+        public StockRT(IDictionary<string, string> data) : base(data) { }
 
         [System.ComponentModel.DataAnnotations.Key]
         public string Time { get; set; }
-        public string StockAnsi { get; set; }
         public string b2 { get; set; }
         public string b3 { get; set; }
         public string c6 { get; set; }

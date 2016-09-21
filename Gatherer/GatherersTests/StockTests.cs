@@ -118,12 +118,12 @@ Key = y Val = 2.04";
             }
         }
 
-        [TestMethod(), Timeout(1000)]
+        [TestMethod()]
         public void StockRTTest()
         {
             SetUp(dictionaryRTString);
-            StockRT appleRt = new StockRT(singleData,"AAPL");
-            StockRT msRt = new StockRT(singleData, "MSFT");
+            StockRT appleRt = new StockRT(singleData);
+            StockRT msRt = new StockRT(singleData);
             using (var db = new StockTabelsContext())
             {
                 db.RT.Add(appleRt);
@@ -132,12 +132,12 @@ Key = y Val = 2.04";
             }
         }
 
-        [TestMethod(), Timeout(1000)]
+        [TestMethod()]
         public void StockDailyTest()
         {
             SetUp(dictionaryDailyString);
-            StockDaily appleDaily = new StockDaily(singleData, "AAPL");
-            StockDaily msDaily = new StockDaily(singleData, "MSFT");
+            StockDaily appleDaily = new StockDaily(singleData);
+            StockDaily msDaily = new StockDaily(singleData);
             using (var db = new StockTabelsContext())
             {
                 db.Daily.Add(appleDaily);
