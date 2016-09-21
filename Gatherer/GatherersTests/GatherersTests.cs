@@ -206,7 +206,7 @@ namespace Gatherer.Tests
         {
             results = new List<string[]>();
             List<string> stockNames = new List<string>(new string[] { "AAPL", "MSFT", "GOOG" });
-            gatherer = new YahooGathererDaily(300, stockNames);
+            gatherer = new YahooGathererRT(300, stockNames);
             gatherer.DataUpdated += CheckDict;
         }
 
