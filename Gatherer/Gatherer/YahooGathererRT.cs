@@ -64,6 +64,9 @@ namespace Gatherer
             [Description("p/e ratio")]
             r2,
 
+            [Description("symbol")]
+            s,
+
             [Description("holdings value")]
             v7,
 

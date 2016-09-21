@@ -26,6 +26,7 @@ Key = k1 Val = N/A
 Key = k2 Val = N/A
 Key = m2 Val = N/A
 Key = r2 Val = N/A
+Key = s Val = AAPL
 Key = v7 Val = N/A
 Key = w4 Val = N/A
 Key = n Val = Apple Inc.
@@ -41,6 +42,7 @@ Key = k1 Val = N/A
 Key = k2 Val = N/A
 Key = m2 Val = N/A
 Key = r2 Val = N/A
+Key = s Val = GOOG
 Key = v7 Val = N/A
 Key = w4 Val = N/A
 Key = n Val = Alphabet Inc.
@@ -56,6 +58,7 @@ Key = k1 Val = N/A
 Key = k2 Val = N/A
 Key = m2 Val = N/A
 Key = r2 Val = N/A
+Key = s Val = MSFT
 Key = v7 Val = N/A
 Key = w4 Val = N/A
 Key = n Val = Microsoft Corporation
@@ -300,8 +303,9 @@ Key = Time Val = 636100939241159081";
         public void StockRTTest()
         {
             logger.Info("started RT test");
-            SetUp(dictionaryRTString);
+            SetUp(dictionaryAppleRTString);
             StockRT appleRt = new StockRT(singleData);
+            SetUp(dictionaryMicrosoftRTString);
             StockRT msRt = new StockRT(singleData);
             using (var db = new StockTabelsContext())
             {
@@ -318,6 +322,7 @@ Key = Time Val = 636100939241159081";
         {
             SetUp(dictionaryAppleDailyString);
             StockDaily appleDaily = new StockDaily(singleData);
+            SetUp(dictionaryMicrosoftDailyString);
             StockDaily msDaily = new StockDaily(singleData);
             using (var db = new StockTabelsContext())
             {
