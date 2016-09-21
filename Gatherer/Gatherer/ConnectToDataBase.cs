@@ -10,14 +10,17 @@ namespace Gatherer
 {
     public abstract class StockBase
     {
+        public string n { get; set; }
         protected static Logger logger = LogManager.GetCurrentClassLogger();
-
+        public string getAnsi()
+        {
+            return n;
+        } 
         public StockBase(IDictionary<string, string> data)
         {
             foreach (var prop in this.GetType().GetProperties())
             {
                 if (prop.Name == "Time") continue;
-                    
                 try
                 {
                     prop.SetValue(this, data[prop.Name]);
@@ -80,7 +83,6 @@ namespace Gatherer
         public string m6 { get; set; }
         public string m7 { get; set; }
         public string m8 { get; set; }
-        public string n { get; set; }
         public string n4 { get; set; }
         public string o { get; set; }
         public string p { get; set; }
@@ -111,6 +113,7 @@ namespace Gatherer
 
     public class StockRT : StockBase
     {
+        
         public StockRT(IDictionary<string, string> data) : base(data) { }
 
         [System.ComponentModel.DataAnnotations.Key]
@@ -149,7 +152,7 @@ namespace Gatherer
     {
         public string StockName;
         //TODO: Add more fields for more features;
-        public StockTabelsContext Tables { get; set; }
+        public StockTabelsContext Tables = new StockTabelsContext();
         public StockContext(string StockName) { this.StockName = StockName; }
     }
 
@@ -187,18 +190,13 @@ namespace Gatherer
     }
 }
 
-//public class StockGeneralData
-//{
-//    [System.ComponentModel.DataAnnotations.Key]
-//    public int DataId { get; set; }
-//    public int Date { get; set; } //Need to consider if to change to Date format for now it's YYYYMMDD
-//    public double Open { get; set; }
-//    public double High { get; set; }
-//    public double Low { get; set; }
-//    public double Close { get; set; }
-//    public int Volume { get; set; }
-//    public double OpenInt { get; set; }
-
-//    public string StockName { get; set; }
-//    //public virtual Stock Stock { get; set; }
-//}
+public class StocksGeneralTable
+{
+    [System.ComponentModel.DataAnnotations.Key]
+    public string StockAnsi { get; set; }
+    public string CompanyName { get; set; }
+    public string Industry { get; set; }
+    public string SubInsudtry { get; set; }
+    public double Revenue { get; set; }
+    //public virtual Stock Stock { get; set; }
+}

@@ -13,35 +13,115 @@ namespace Gatherer.Tests
     [TestClass()]
     public class GatherersTests
     {
-        public class Testing
+        public class Stock1
         {
             [System.ComponentModel.DataAnnotations.Key]
             public int id { get; set; }
-            public Dictionary<string, int> dicty  { get; set; }
-            public Testing()
-            {
-                dicty = new Dictionary<string, int>();
-            }
+            public string name { get; set; }
         }
 
-        public class TestContext : DbContext
+        public class Stock2
         {
-            public DbSet<Testing> Daily { get; set; }
+            [System.ComponentModel.DataAnnotations.Key]
+            public int id { get; set; }
+            public string name { get; set; }
         }
 
-        [TestMethod(), Timeout(5000)]
-        public void WebTestNotRealTime()
+        public class TestContext1 : DbContext
         {
-            using(var db = new TestContext())
-            {
-                Testing t = new Testing();
-                t.id = 3;
-                t.dicty.Add("key", 0);
-                db.Daily.Add(t);
-                db.SaveChanges();
-            }
+            public DbSet<Stock1> Daily { get; set; }
+            public DbSet<Stock2> RT { get; set; }
+        }
+
+        public class TestContext2 : DbContext
+        {
+            public DbSet<Stock1> Daily { get; set; }
+            public DbSet<Stock2> RT { get; set; }
+        }
+
+        [TestMethod()]
+        public void WorkingWithSeveralContexts()
+        {
+            //Dictionary<string, DbContext> collection = new Dictionary<string, DbContext>();
+            //TestContext1 apple = new TestContext1();
+            //TestContext2 msft = new TestContext2();
+            ////collection.Add("AAPL", apple);
+            ////collection.Add("MSFT", msft);
+
+            //Stock1 t = new Stock1();
+            //t.id = 1;
+            //t.name = "Apple_Daily1";
+            //Stock1 a = new Stock1();
+            //a.id = 2;
+            //a.name = "Apple_Daily2";
+            //Stock2 b = new Stock2();
+            //b.id = 3;
+            //b.name = "Apple_RT1";
+            //Stock2 c = new Stock2();
+            //c.id = 4;
+            //c.name = "Apple_RT2";
+            //Stock1 d = new Stock1();
+            //d.id = 5;
+            //d.name = "MS_Daily1";
+            //Stock1 e = new Stock1();
+            //e.id = 6;
+            //e.name = "MS_Daily2";
+            //Stock2 f = new Stock2();
+            //f.id = 7;
+            //f.name = "MS_RT1";
+            //Stock2 g = new Stock2();
+            //g.id = 8;
+            //g.name = "MS_RT2";
+            //Stock2 h = new Stock2();
+            //h.id = 9;
+            //h.name = "MS_RT3";
+
+            //apple.Daily.Add(t);
+            //apple.RT.Add(b);
+            //msft.Daily.Add(d);
+            //msft.RT.Add(f);
+
+            //apple.SaveChanges();
+            //msft.SaveChanges();
+            //collection["MSFT"].Daily.Add(d);
+            //collection["AAPL"].Daily.Add(t);
+            //collection["MSFT"].RT.Add(f);
+            //collection["AAPL"].RT.Add(b);
+            //collection["AAPL"].Daily.Add(a);
+            //collection["MSFT"].Daily.Add(e);
+            //collection["AAPL"].RT.Add(c);
+            //collection["MSFT"].RT.Add(g);
+            //collection["MSFT"].RT.Add(h);
+
+            //foreach (KeyValuePair<string, TestContext> entry in collection)
+            //{
+            //    entry.Value.SaveChanges();
+            //}
+
+            //using(var db = new TestContext())
+            //{
+            //    Testing t = new Testing();
+            //    t.id = 1;
+            //    t.name = "Eitan";
+            //    db.Daily.Add(t);
+            //    db.SaveChanges();
+            //}
+
+
+            //using(var aa = new TestContext())
+            //{
+            //    Testing d = new Testing();
+            //    d.id = 2;
+            //    d.name = "Dor";
+            //    aa.Daily.Add(d);
+            //    aa.SaveChanges();
+            //}
         }
     }
+
+
+
+
 
     [TestClass()]
     abstract public class YahooGathererTests

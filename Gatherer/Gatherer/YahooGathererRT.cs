@@ -68,7 +68,10 @@ namespace Gatherer
             v7,
 
             [Description("day's value change")]
-            w4
+            w4,
+
+           [Description("name")]
+           n
         }
     }  
 }
