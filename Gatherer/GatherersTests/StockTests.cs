@@ -26,7 +26,8 @@ Key = k2 Val = N / A
 Key = m2 Val = N / A
 Key = r2 Val = N / A
 Key = v7 Val = N / A
-Key = w4 Val = N / A";
+Key = w4 Val = N / A
+Key = Time Val = 500";
 
         static readonly string dictionaryDailyString = @"Key = a Val = 114.95
 Key = a2 Val = 33819200
@@ -97,7 +98,8 @@ Key = v1 Val = N / A
 Key = w Val = 89.47 - 123.82
 Key = w1 Val = N / A
 Key = x Val = NMS
-Key = y Val = 2.04";
+Key = y Val = 2.04
+Key = Time Val = 500";
 
         private string[] Split(string source, string sep)
         {

@@ -28,7 +28,7 @@ namespace Gatherer
                 }
                 catch(Exception e)
                 {
-                    logger.Error(e, "Failed to connect to " + s +"'s database. skipping.");
+                    logger.Warn(e, "Failed to connect to " + s +"'s database. skipping.");
                 }
             }
                 
@@ -41,7 +41,14 @@ namespace Gatherer
 
         public void Run()
         {
-
+            string[] stockNames = stocks.Select((StockContext sc) => sc.StockName).ToArray();
+            int dayInMilliseconds = 1000 * 60 * 60 * 24;
+            int fiveMinutesInMilliseconds = 1000 * 5;
+            logger.Info("Creating daily gatherer");
+            YahooGathererDaily daily = new YahooGathererDaily(dayInMilliseconds, stockNames);
+            logger.Info("Creating realtime gatherer which will sample every 5 minutes");
+            YahooGathererRT rt = new YahooGathererRT(fiveMinutesInMilliseconds, stockNames);
+            // TODO: add a function to DataUpdated event to read all data into database
         }
 
         public static void Main(string[] args)
@@ -58,6 +65,7 @@ namespace Gatherer
             }
 
             MainGatherer gatherer = new MainGatherer(stockNames);
+            // TODO: dont return so data will be collected continuesly.
         }
     }
 }
