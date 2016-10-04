@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gatherers", "Gatherer\Gatherers.csproj", "{16B247FA-E2F9-49E8-A822-408C6DA83CD4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GatherersTests", "GatherersTests\GatherersTests.csproj", "{31523DB0-B6A4-4BC3-85D9-94E61FE42F44}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "stockDB", "..\stockDB\stockDB\stockDB.csproj", "{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DailyAndRTMain", "DailyAndRTMain\DailyAndRTMain.csproj", "{EE811000-9005-41AB-9B8B-DA36012E134E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C435FAEC-F9D5-4B63-9B36-E1AE8E1F656B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EE811000-9005-41AB-9B8B-DA36012E134E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE811000-9005-41AB-9B8B-DA36012E134E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE811000-9005-41AB-9B8B-DA36012E134E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE811000-9005-41AB-9B8B-DA36012E134E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
