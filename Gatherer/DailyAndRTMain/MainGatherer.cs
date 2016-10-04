@@ -44,20 +44,27 @@ namespace Gatherer
 
         private void AddToDb<T>(object sender, DataUpdatedArgs args, StockType st) where T : StockBase
         {
+            logger.Info("Adding to DB with stocktype=" + st.ToString());
             var stocksValues = args.Values;
             foreach (var stockAnsiToValues in stocksValues)
             {
                 if (st == StockType.RT)
                 {
                     StockRT stock = new StockRT(stockAnsiToValues.Value);
+                    logger.Debug("Adding stock with type RT with stockname=" + stockAnsiToValues.Key);
                     this.stocks[stockAnsiToValues.Key].Tables.RT.Add(stock);
                 }
                 else if (st == StockType.Daily)
                 {
                     StockDaily stock = new StockDaily(stockAnsiToValues.Value);
+                    logger.Debug("Adding stock with type Daily with stockname=" + stockAnsiToValues.Key);
                     this.stocks[stockAnsiToValues.Key].Tables.Daily.Add(stock);
                 }
-                else throw new Exception("Unknown stock type"); 
+                else {
+                    logger.Error("Unknown stock type while trying to enter data to DB");
+                    throw new Exception("Unknown stock type");
+                }
+                this.stocks[stockAnsiToValues.Key].Tables.SaveChanges();
             }
         }
 
@@ -71,15 +78,17 @@ namespace Gatherer
             AddToDb<StockDaily>(sender, args, StockType.Daily);
         }
 
-        public void Run()
+        public void Run(int rtInterval=-1, int dailyInterval=-1)
         {
+            if (rtInterval == -1)
+                rtInterval = 5000;
+            if (dailyInterval == -1)
+                dailyInterval = (1000 * 60 * 60 * 24);
             string[] stockNames = stocks.Keys.ToArray();
-            int dayInMilliseconds = 1000 * 60 * 60 * 24;
-            int fiveMinutesInMilliseconds = 1000 * 5;
             logger.Info("Creating daily gatherer");
-            YahooGathererDaily daily = new YahooGathererDaily(dayInMilliseconds, stockNames);
+            YahooGathererDaily daily = new YahooGathererDaily(dailyInterval, stockNames);
             logger.Info("Creating realtime gatherer which will sample every 5 minutes");
-            YahooGathererRT rt = new YahooGathererRT(fiveMinutesInMilliseconds, stockNames);
+            YahooGathererRT rt = new YahooGathererRT(rtInterval, stockNames);
             rt.DataUpdated += AddRTToDB;
             daily.DataUpdated += AddDailyToDB;
         }
@@ -87,9 +96,13 @@ namespace Gatherer
         public static void Main(string[] args)
         {
             List<string> stockNames = new List<string>();
-            OptionSet p = new OptionSet()
-                .Add("s|stock", delegate (string v) { stockNames.Add(v); } );
-            var extra = p.Parse(args);
+            int rtInterval = -1;
+            int dailyInterval = -1;
+            OptionSet p = new OptionSet() {
+                { "s|stock=", v => stockNames.Add(v) },
+                { "r|rt-interval=", "Interval for realtime sampeling", v => rtInterval = Int32.Parse(v)},
+                { "d|daily-interval=", "Interval for daily sampeling", v => dailyInterval = Int32.Parse(v)}, };
+        var extra = p.Parse(args);
 
             if(stockNames.Count == 0)
             {
@@ -98,6 +111,7 @@ namespace Gatherer
             }
 
             MainGatherer gatherer = new MainGatherer(stockNames);
+            gatherer.Run(rtInterval=rtInterval, dailyInterval=dailyInterval);
             waitOn.WaitOne();
         }
     }
