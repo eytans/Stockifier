@@ -75,17 +75,18 @@ typesAndUrlValue = {"Accident & Health Insurance (Financial)" : 431 ,"Chemicals 
             , "Specialty Chemicals (Basic Materials)":113, "Synthetics (Basic Materials)":111}
 
 
-allTypesData = dict.fromkeys(typesAndUrlValue.keys(), list())
+allTypesData = dict.fromkeys(typesAndUrlValue.keys())
 for field in typesAndUrlValue.keys():
-
     value = typesAndUrlValue[field]
     target = 'https://screener.finance.yahoo.com/b?sc='+str(value)+'&im=&prmin=&prmax=&mcmin=&mcmax=&dvymin=&dvymax=&betamin=&betamax=&remin=&remax=&pmmin=&pmmax=&pemin=&pemax=&pbmin=&pbmax=&psmin=&psmax=&pegmin=&pegmax=&gr=&grfy=&ar=&vw=1&db=stocks'
     req = urllib.request.Request(url=target)
     f = urllib.request.urlopen(req)
     xhtml = f.read().decode('utf-8')
     p = HTMLTableParser()
+    p.tables = []
     p.feed(xhtml)
     numberOfStocks = p.tables[0][0][0].split(' ')[7].split(')')[0]
+    count=0
     b=1
     while b <= int(numberOfStocks):
         newTarget = target+"&b="+str(b)
@@ -93,19 +94,25 @@ for field in typesAndUrlValue.keys():
         f = urllib.request.urlopen(req)
         xhtml = f.read().decode('utf-8')
         p = HTMLTableParser()
+        p.tables =[]
         p.feed(xhtml)
-        allTypesData[field].append(p.tables[1][1:-1])
+        tmp = [x for i,x in enumerate(p.tables[1]) if i!=0]
+        if allTypesData[field] == None:
+            allTypesData[field]=tmp
+        else:
+            allTypesData[field]+=(tmp)
+        count+=len(tmp)
         b += 20
+    print(str(count)+" items where added to field= "+ field+" expect= "+str(numberOfStocks)+" currently have= "+str(len(allTypesData[field])))
     fo = open(str(field)+'.csv','w')
     with fo as csv_file:
         writer = csv.writer(fo)
-        for v in allTypesData[field]:
-            writer.writerow(v)
+        writer.writerow(allTypesData[field])
     fo.close()
 
-for field in typesAndUrlValue.keys():
-    print(allTypesData[field])
-    print()
+# for field in typesAndUrlValue.keys():
+#     print(allTypesData[field])
+#     print()
 
 
 # target = 'https://screener.finance.yahoo.com/b?sc=528&im=&prmin=&prmax=&mcmin=&mcmax=&dvymin=&dvymax=&betamin=&betamax=&remin=&remax=&pmmin=&pmmax=&pemin=&pemax=&pbmin=&pbmax=&psmin=&psmax=&pegmin=&pegmax=&gr=&grfy=&ar=&vw=1&db=stocks'
