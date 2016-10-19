@@ -75,40 +75,40 @@ typesAndUrlValue = {"Accident & Health Insurance (Financial)" : 431 ,"Chemicals 
             , "Specialty Chemicals (Basic Materials)":113, "Synthetics (Basic Materials)":111}
 
 
-allTypesData = dict.fromkeys(typesAndUrlValue.keys())
-for field in typesAndUrlValue.keys():
-    value = typesAndUrlValue[field]
-    target = 'https://screener.finance.yahoo.com/b?sc='+str(value)+'&im=&prmin=&prmax=&mcmin=&mcmax=&dvymin=&dvymax=&betamin=&betamax=&remin=&remax=&pmmin=&pmmax=&pemin=&pemax=&pbmin=&pbmax=&psmin=&psmax=&pegmin=&pegmax=&gr=&grfy=&ar=&vw=1&db=stocks'
+allTypesData = {key: [] for key in typesAndUrlValue.keys()} # dict.fromkeys(typesAndUrlValue.keys())
+
+
+def get_html_table(target):
     req = urllib.request.Request(url=target)
     f = urllib.request.urlopen(req)
     xhtml = f.read().decode('utf-8')
     p = HTMLTableParser()
     p.tables = []
     p.feed(xhtml)
+    return p
+
+
+for field in typesAndUrlValue.keys():
+    value = typesAndUrlValue[field]
+    target = 'https://screener.finance.yahoo.com/b?sc=' + str(value) + \
+             '&im=&prmin=&prmax=&mcmin=&mcmax=&dvymin=&dvymax=&betamin=&betamax=&remin=&remax=&pmmin=&pmmax=&pemin=&pemax=&pbmin=&pbmax=&psmin=&psmax=&pegmin=&pegmax=&gr=&grfy=&ar=&vw=1&db=stocks'
+    p = get_html_table(target)
     numberOfStocks = p.tables[0][0][0].split(' ')[7].split(')')[0]
-    count=0
-    b=1
+    count = 0
+    b = 1
     while b <= int(numberOfStocks):
         newTarget = target+"&b="+str(b)
-        req = urllib.request.Request(url=newTarget)
-        f = urllib.request.urlopen(req)
-        xhtml = f.read().decode('utf-8')
-        p = HTMLTableParser()
-        p.tables =[]
-        p.feed(xhtml)
+        p = get_html_table(newTarget)
         tmp = [x for i,x in enumerate(p.tables[1]) if i!=0]
-        if allTypesData[field] == None:
-            allTypesData[field]=tmp
-        else:
-            allTypesData[field]+=(tmp)
-        count+=len(tmp)
+        allTypesData[field] += tmp
+        count += len(tmp)
         b += 20
+
     print(str(count)+" items where added to field= "+ field+" expect= "+str(numberOfStocks)+" currently have= "+str(len(allTypesData[field])))
-    fo = open(str(field)+'.csv','w')
-    with fo as csv_file:
-        writer = csv.writer(fo)
-        writer.writerow(allTypesData[field])
-    fo.close()
+    with open('{}.csv'.format(field), 'w') as csv_file:
+        writer = csv.writer(csv_file)
+        for stock in allTypesData[field]:
+            writer.writerow(stock)
 
 # for field in typesAndUrlValue.keys():
 #     print(allTypesData[field])

@@ -1,1 +1,16 @@
-"['AXRX', 'AMEXDRUG CP', 'Drug Related Products', 'Quote , Profile , Research , Financials']","['COCP', 'COCRYSTAL PHARMA', 'Drug Related Products', 'Quote , Profile , Insider , Financials']","['CTDH', 'CTD HOLDINGS INC', 'Drug Related Products', 'Quote , Profile , Research , Insider , Financials']","['ENZB', 'ENZYMEBIOSYSTEMS', 'Drug Related Products', 'Quote , Profile , Financials']","['HJOEE', ""HANGOVER JOE'S HOLDI"", 'Drug Related Products', 'Quote']","['IAGX', 'IMAGENETIX INC', 'Drug Related Products', 'Quote , Profile , Research , Financials']","['IAGXE', 'IMAGENETIX INC', 'Drug Related Products', 'Quote']","['NRTI', 'INERGETICS, INC.', 'Drug Related Products', 'Quote , Profile , Research , Financials']","['NAII', 'Natural Alternatives Internatio', 'Drug Related Products', 'Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials']","['PHLI', 'PACIFICHEALTH LABS', 'Drug Related Products', 'Quote , Profile , Research , Financials']","['PCYN', 'PROCYON CORP NEW', 'Drug Related Products', 'Quote , Profile , Insider , Financials']","['PRGO', 'Perrigo Company plc Ordinary Sh', 'Drug Related Products', 'Quote , Profile , Research , Insider , Financials']","['PRPH', 'ProPhase Labs, Inc.', 'Drug Related Products', 'Quote , Profile , Research , Insider , Financials']","['RBCL', 'RBC LIFE SCIENCES', 'Drug Related Products', 'Quote , Profile , Research , Insider , Financials']","['RWMIE', 'REGALWORKS MEDIA', 'Drug Related Products', 'Quote']","['USNA', 'USANA Health Sciences, Inc. Com', 'Drug Related Products', 'Quote , Profile , Research , SEC , Insider , Financials , Analyst Ratings']"
+AXRX,AMEXDRUG CP,Drug Related Products,Quote
+COCP,COCRYSTAL PHARMA,Drug Related Products,Quote
+CTDH,CTD HOLDINGS INC,Drug Related Products,Quote
+ENZB,ENZYMEBIOSYSTEMS,Drug Related Products,Quote
+HJOEE,HANGOVER JOE'S HOLDI,Drug Related Products,Quote
+IAGX,IMAGENETIX INC,Drug Related Products,Quote
+IAGXE,IMAGENETIX INC,Drug Related Products,Quote
+NRTI,"INERGETICS, INC.",Drug Related Products,Quote
+NAII,Natural Alternatives Internatio,Drug Related Products,"Quote , Chart , News , Profile , SEC , Msgs , Insider , Financials"
+PHLI,PACIFICHEALTH LABS,Drug Related Products,Quote
+PCYN,PROCYON CORP NEW,Drug Related Products,Quote
+PRGO,Perrigo Company plc Ordinary Sh,Drug Related Products,"Quote , Profile , Research , Insider , Financials"
+PRPH,"ProPhase Labs, Inc.",Drug Related Products,"Quote , Insider , Financials"
+RBCL,RBC LIFE SCIENCES,Drug Related Products,Quote
+RWMIE,REGALWORKS MEDIA,Drug Related Products,Quote
+USNA,"USANA Health Sciences, Inc. Com",Drug Related Products,"Quote , Profile , Research , SEC , Insider , Financials , Analyst Ratings"
