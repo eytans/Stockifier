@@ -1,1 +1,23 @@
-"['AMAG', 'AMAG Pharmaceuticals, Inc.', 'Diagnostic Substances', 'Quote , Profile , Research , Msgs , Insider , Financials , Analyst Ratings']","['ATOS', 'Atossa Genetics Inc.', 'Diagnostic Substances', 'Quote , Profile , Research , Insider , Financials']","['BZYR', 'BURZYNSKI RESEARCH', 'Diagnostic Substances', 'Quote , Profile , Research , Financials']","['CNSO', 'CNS RESPONSE CMN', 'Diagnostic Substances', 'Quote , Profile , Research , Insider']","['CONX', 'CORGENIX MED CORP', 'Diagnostic Substances', 'Quote , Research']","['CEMI', 'Chembio Diagnostics, Inc.', 'Diagnostic Substances', 'Quote , Profile , Research , Insider , Financials , Analyst Ratings']","['CEMID', 'Chembio Diagnostics, Inc.', 'Diagnostic Substances', 'Quote']","['IDXX', 'IDEXX Laboratories, Inc.', 'Diagnostic Substances', 'Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['INOL', 'INOLIFE TECHNOLOGIES', 'Diagnostic Substances', 'Quote , Profile , Research , Financials']","['VIVO', 'Meridian Bioscience Inc.', 'Diagnostic Substances', 'Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['NEOG', 'Neogen Corporation', 'Diagnostic Substances', 'Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['NYMX', 'Nymox Pharmaceutical Corporatio', 'Diagnostic Substances', 'Quote , Chart , News , Profile , Research , Msgs , Insider , Financials , Analyst Ratings']","['OXFD', 'Oxford Immunotec Global PLC', 'Diagnostic Substances', 'Quote , Profile , Research , Insider , Financials']","['QDEL', 'Quidel Corporation', 'Diagnostic Substances', 'Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['RCLL', 'REGENOCELL THERAPEUT', 'Diagnostic Substances', 'Quote']","['SGUI', 'SANGUINE CORP', 'Diagnostic Substances', 'Quote , Profile , Research , Financials']","['SCRA', 'SECUREALERT, INC', 'Diagnostic Substances', 'Quote , Chart']","['SCRAD', 'SECUREALERT, INC', 'Diagnostic Substances', 'Quote']","['SRDX', 'Surmodics, Inc.', 'Diagnostic Substances', 'Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['TRIB', 'Trinity Biotech plc', 'Diagnostic Substances', 'Quote , Chart , News , Profile , Research , Msgs , Financials']","['APPY', 'Venaxis, Inc.', 'Diagnostic Substances', 'Quote , Profile , Research , Insider , Financials , Analyst Ratings']","['APPYD', 'Venaxis, Inc.', 'Diagnostic Substances', 'Quote']","['VRML', 'Vermillion, Inc.', 'Diagnostic Substances', 'Quote , Profile , Research , Insider , Financials , Analyst Ratings']"
+AMAG,"AMAG Pharmaceuticals, Inc.",Diagnostic Substances,"Quote , Profile , Research , Msgs , Insider , Financials , Analyst Ratings"
+ATOS,Atossa Genetics Inc.,Diagnostic Substances,"Quote , Research , Insider , Financials"
+BZYR,BURZYNSKI RESEARCH,Diagnostic Substances,Quote
+CNSO,CNS RESPONSE CMN,Diagnostic Substances,Quote
+CONX,CORGENIX MED CORP,Diagnostic Substances,Quote
+CEMI,"Chembio Diagnostics, Inc.",Diagnostic Substances,"Quote , Profile , Research , Insider , Financials , Analyst Ratings"
+CEMID,"Chembio Diagnostics, Inc.",Diagnostic Substances,Quote
+IDXX,"IDEXX Laboratories, Inc.",Diagnostic Substances,"Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+INOL,INOLIFE TECHNOLOGIES,Diagnostic Substances,Quote
+VIVO,Meridian Bioscience Inc.,Diagnostic Substances,"Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+NEOG,Neogen Corporation,Diagnostic Substances,"Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+NYMX,Nymox Pharmaceutical Corporatio,Diagnostic Substances,"Quote , Chart , News , Profile , Research , Msgs , Insider , Financials , Analyst Ratings"
+OXFD,Oxford Immunotec Global PLC,Diagnostic Substances,"Quote , Profile , Research , Insider , Financials"
+QDEL,Quidel Corporation,Diagnostic Substances,"Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+RCLL,REGENOCELL THERAPEUT,Diagnostic Substances,Quote
+SGUI,SANGUINE CORP,Diagnostic Substances,Quote
+SCRA,"SECUREALERT, INC",Diagnostic Substances,Quote
+SCRAD,"SECUREALERT, INC",Diagnostic Substances,Quote
+SRDX,"Surmodics, Inc.",Diagnostic Substances,"Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+TRIB,Trinity Biotech plc,Diagnostic Substances,"Quote , Chart , News , Profile , Research , Msgs , Financials"
+APPY,"Venaxis, Inc.",Diagnostic Substances,"Quote , Profile , Research , Insider , Financials , Analyst Ratings"
+APPYD,"Venaxis, Inc.",Diagnostic Substances,Quote
+VRML,"Vermillion, Inc.",Diagnostic Substances,"Quote , Profile , Research , Insider , Financials , Analyst Ratings"
