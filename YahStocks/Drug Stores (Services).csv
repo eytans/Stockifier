@@ -1,1 +1,8 @@
-"['CJJD', 'China Jo-Jo Drugstores, Inc.', 'Drug Stores', 'Quote , Profile , Research , Insider , Financials']","['NPD', 'China Nepstar Chain Drugstore L', 'Drug Stores', 'Quote , Research , Financials , Analyst Ratings']","['DECN', 'DECISION DIAGNOSTICS', 'Drug Stores', 'Quote , Profile , Research , Financials']","['GNC', 'GNC Holdings, Inc. Class A Comm', 'Drug Stores', 'Quote , Profile , Research , Insider , Financials , Analyst Ratings']","['RXMD', 'PROGRESSIVE CARE', 'Drug Stores', 'Quote , Profile , Financials']","['RXMDE', 'PROGRESSIVE CARE', 'Drug Stores', 'Quote']","['RAD', 'Rite Aid Corporation Common Sto', 'Drug Stores', 'Quote , Chart , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['WBA', 'Walgreens Boots Alliance, Inc.', 'Drug Stores', 'Quote , Profile , Research , Insider , Financials']"
+CJJD,"China Jo-Jo Drugstores, Inc.",Drug Stores,"Quote , Profile , Insider , Financials"
+NPD,China Nepstar Chain Drugstore L,Drug Stores,"Quote , Financials , Analyst Ratings"
+DECN,DECISION DIAGNOSTICS,Drug Stores,Quote
+GNC,"GNC Holdings, Inc. Class A Comm",Drug Stores,"Quote , Profile , Research , Insider , Financials , Analyst Ratings"
+RXMD,PROGRESSIVE CARE,Drug Stores,Quote
+RXMDE,PROGRESSIVE CARE,Drug Stores,Quote
+RAD,Rite Aid Corporation Common Sto,Drug Stores,"Quote , Chart , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+WBA,"Walgreens Boots Alliance, Inc.",Drug Stores,"Quote , Profile , Research , Insider , Financials"

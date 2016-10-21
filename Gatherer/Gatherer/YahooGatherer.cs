@@ -69,7 +69,7 @@ namespace Gatherer
 
             string baseUrl = "http://finance.yahoo.com/d/quotes.csv?s={0}&f={1}";
             // TODO: probably change ToString to GetName or Name
-            string stockNames = stocks.Skip(1).Aggregate(stocks.First().ToString(), (s1, s2) => s1 + "+" + s2.ToString());
+            string stockNames = stocks.Skip(1).Aggregate(stocks.First().ToString().Replace(" ", string.Empty), (s1, s2) => s1 + "+" + s2.ToString().Replace(" ", string.Empty));
             IList<string> modifiers = GetModifiers();
             string dataFields = modifiers.Aggregate("", (s, modifier) => s + modifier);
             string url = String.Format(baseUrl, stockNames, dataFields);

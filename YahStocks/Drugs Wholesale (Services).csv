@@ -1,1 +1,5 @@
-"['ABC', 'AmerisourceBergen Corporation C', 'Drugs Wholesale', 'Quote , Chart , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['CAH', 'Cardinal Health, Inc. Common St', 'Drugs Wholesale', 'Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['MITD', 'MIT HOLDING, INC.', 'Drugs Wholesale', 'Quote , Research']","['MCK', 'McKesson Corporation Common Sto', 'Drugs Wholesale', 'Quote , Chart , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings']","['NIUS', 'NIUSULE BIO-PHARMACE', 'Drugs Wholesale', 'Quote , Profile , Research , Financials']"
+ABC,AmerisourceBergen Corporation C,Drugs Wholesale,"Quote , Chart , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+CAH,"Cardinal Health, Inc. Common St",Drugs Wholesale,"Quote , Chart , News , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+MITD,"MIT HOLDING, INC.",Drugs Wholesale,Quote
+MCK,McKesson Corporation Common Sto,Drugs Wholesale,"Quote , Chart , Profile , Research , SEC , Msgs , Insider , Financials , Analyst Ratings"
+NIUS,NIUSULE BIO-PHARMACE,Drugs Wholesale,Quote
