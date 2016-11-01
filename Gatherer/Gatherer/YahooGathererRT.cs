@@ -43,11 +43,11 @@ namespace Gatherer
             [Description("holdings gain percent")]
             g5,
 
-            [Description("holdings gain")]
-            g6,
+            //[Description("holdings gain")]
+            //g6,
 
-            [Description("order book")]
-            i5,
+            //[Description("order book")]
+            //i5,
 
             [Description("market cap")]
             j3,
@@ -58,10 +58,10 @@ namespace Gatherer
             [Description("change percent")]
             k2,
 
-            [Description("day's range")]
-            m2,
+            //[Description("day's range")]
+            //m2,
 
-            [Description("p/e ratio")]
+            //[Description("p/e ratio")]
             r2,
 
             [Description("symbol")]
@@ -70,8 +70,8 @@ namespace Gatherer
             [Description("holdings value")]
             v7,
 
-            [Description("day's value change")]
-            w4,
+            //[Description("day's value change")]
+            //w4,
 
            [Description("name")]
            n
