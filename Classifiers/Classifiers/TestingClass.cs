@@ -11,11 +11,14 @@ using Accord.MachineLearning.Bayes;
 using System.Data;
 using Accord.Statistics.Filters;
 using Accord.MachineLearning.DecisionTrees.Learning;
+using Accord.MachineLearning.Boosting.Learners;
 
 namespace Classifiers
 {
     public class TestingClass
     {
+        DecisionTree tree;
+
         public TestingClass()
         {
             string dataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
@@ -77,22 +80,23 @@ namespace Classifiers
             //foreach (string name in names.ToList().GetRange(2, names.Count() - 2))
             //    attributes.Add(DecisionVariable.Continuous(name));
 
-            DataTable outputs = table.Clone();
-            for (int i = 0; i < outputs.Columns.Count; i++)
-                outputs.Columns.RemoveAt(i);
+            int[] outputs = table.ToArray<int>().Last();
 
-            DataTable inputs = table.Clone();
-            inputs.Columns.RemoveAt(14);
+            table.Columns.RemoveAt(14);
+            int[][] inputs = table.ToArray<int>();
 
-            inputs.Rows.Cast<DataRow>().Select(r => r.ItemArray).ToArray();
+            ModelConstructor<Weak<DecisionTree>> trainer = delegate (double[] weights)
+            {
+                tree = new DecisionTree(attributes, 2);
+                ID3Learning id3learning = new ID3Learning(tree);
+                id3learning.Learn(inputs, outputs, weights);
+                return new Weak<DecisionTree>(tree, (t, vector) => t.Decide(vector));
+            };
 
-            DecisionTree t = new DecisionTree(attributes, 2);
-            ID3Learning id3learning = new ID3Learning(t);
-            id3learning.Run(inputs., 
-                outputs);
-            id3learning.Save("out.tree");
 
-            //AdaBoost<NaiveBayes> booster;
+            Boost<Weak<DecisionTree>> model = new Boost<Weak<DecisionTree>>();
+            AdaBoost<Weak<DecisionTree>> booster = new AdaBoost<Weak<DecisionTree>>(model, trainer);
+            booster.Run(table.ToArray<double>(), outputs);
         }
         
     }
