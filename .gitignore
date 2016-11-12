@@ -254,5 +254,9 @@ paket-files/
 
 # ignore resources
 resources/*
+db_dump/*
+
+# ignore cache
+*.pyc
 
 Gatherer/Gatherer/YahooGatherer.cs
