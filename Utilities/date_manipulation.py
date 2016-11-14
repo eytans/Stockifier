@@ -1,10 +1,17 @@
 from datetime import date
 import os
-
 import sys
-getdate = lambda str_date : date(*map(int, str_date.split('-')))
+import pymongo
+import os
+import argparse
+import csv
 
-def find_shared_max_interval(path1,path2):
+
+def getdate(str_date):
+    date(*map(int, str_date.split('-')))
+
+
+def find_shared_max_interval(path1, path2):
     """
     Parameters
     ----------
@@ -15,8 +22,8 @@ def find_shared_max_interval(path1,path2):
     the function will return the maximal common period of both files
     """
 #    getdate = lambda str_date : date(*map(int, str_date.split('-')))
-    file1 = open(path1,'r')
-    file2 = open(path2,'r')
+    file1 = open(path1, 'r')
+    file2 = open(path2, 'r')
     list1 = []
     list2 = []
     for line in file1.readlines():
@@ -197,15 +204,6 @@ def main_relation_classifier(stock_path,market_path):
     return success_count/data_length
 
 
-
-path1 = "C:/Users/sdshw/Desktop/Stockfier/stockifier/YahStocks/Accident & Health Insurance (Financial)/AFL.csv"
-path2 = "C:/Users/sdshw/Desktop/Stockfier/stockifier/YahStocks/Accident & Health Insurance (Financial)/AIZ.csv"
-path3 = "C:/Users/sdshw/Desktop/Stockfier/stockifier/YahStocks/Accident & Health Insurance (Financial)"
-path4 = "C:/Users/sdshw/Desktop/Stockfier/stockifier/YahStocks/Diagnostic Substances (Healthcare)/AMAG.csv"
-path6 = "C:/Users/sdshw/Desktop/Stockfier/stockifier/YahStocks/Diagnostic Substances (Healthcare)/NEOG.csv"
-path7 = "C:/Users/sdshw/Desktop/Stockfier/stockifier/YahStocks/Diagnostic Substances (Healthcare)/QDEL.csv"
-path5 = "C:/Users/sdshw/Desktop/Stockfier/stockifier/YahStocks/Medical Laboratories & Research (Healthcare)"
-basic_market_url = "C:/Users/sdshw/Desktop/Stockfier/stockifier/YahStocks/"
 market_list = ['Accident & Health Insurance (Financial)','Chemicals - Major Diversified (Basic Materials)',
                'Diagnostic Substances (Healthcare)','Drug Delivery (Healthcare)','Drug Manufacturers - Other (Healthcare)',
                'Drug Related Products (Healthcare)','Drug Stores (Services)',
@@ -214,15 +212,32 @@ market_list = ['Accident & Health Insurance (Financial)','Chemicals - Major Dive
                'Medical Instruments & Supplies (Healthcare)','Medical Laboratories & Research (Healthcare)',
                'Specialized Health Services (Healthcare)','Specialty Chemicals (Basic Materials)',
                'Synthetics (Basic Materials)']
-#print(find_shared_max_interval(path1,path2))
-#start,finish = maximal_shared_range_dir(path3)
-#print(get_relevant_data(start, finish, path3))
-#print(find_maximal_for_stock_and_market(path4,path3))
+# print(find_shared_max_interval(path1,path2))
+# start,finish = maximal_shared_range_dir(path3)
+# print(get_relevant_data(start, finish, path3))
+# print(find_maximal_for_stock_and_market(path4,path3))
 
 # TODO problem with drug manufactor major & drugs generics & Medical Appliances & Equipment (Healthcare)
 
-#stock_path= sys.argv[1]
-#market_path = sys.argv[2]
 
-for market in market_list:
-    print(find_abs_relation(path7,basic_market_url+market))
+# stock_path= sys.argv[1]
+# market_path = sys.argv[2]
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dir', help='directory from which to read all subdirectories')
+    parser.add_argument('stockcsv', help='path to file to use for relations')
+    parser.add_argument('-d', '--database', default='exchange', help='name of database to connect to')
+    args = parser.parse_args()
+
+    client = pymongo.MongoClient()
+    db = client.get_database(args.database)
+    cl = db['metadata']
+
+    stock_name = os.path.splitext(os.path.basename(args.stockcsv))[0]
+    relations = {}
+    for market in market_list:
+        relations[market] = find_abs_relation(args.stockcsv, os.path.join(args.dir+market))
+    cl.update_one(filter={'stock': stock_name}, update={'$set': {'relations': relations}})
+
+if __name__ == '__main__':
+    main()
