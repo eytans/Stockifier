@@ -25,31 +25,30 @@ class DateManipulator(object):
     # def summerize_market_size_per_date(self, data_list):
     #     open_size,close_size = 0,0
     #     for line in data_list:
-    #         open_size+=float(line.split(',')[2])
+    #        2 open_size+=float(line.split(',')[2])
     #         close_size+=float(line.split(',')[5])
     #     if open_size > close_size:
     #         return False
     #     else:
     #         return True
 
-    def find_abs_relation(self, stock):
+    def find_abs_relation(self, stock_list, markets):
         # check paths
-        stock_list = self.stocks_collection.find({'ticker': stock})
         market_to_len = {}
-        market_to_succes = {}
+        market_to_success = {}
         for day in stock_list:
-            markets_data = self.markets_collection.find({'date': day['date']})
+            markets_data = markets[day['intdate']]
             daily_change = day['change']
             for m_day in markets_data:
                 m_name = m_day['market_name']
                 if m_name not in market_to_len:
                     market_to_len[m_name] = 0
-                    market_to_succes[m_name] = 0
+                    market_to_success[m_name] = 0
                 market_to_len[m_name] += 1
                 market_trend = m_day['change']
                 if abs(market_trend-daily_change) < 0.009:
-                    market_to_succes[m_name] += 1
-        return {key: market_to_succes[key]/market_to_len[key] for key in market_to_succes.keys()}
+                    market_to_success[m_name] += 1
+        return {key: market_to_success[key]/market_to_len[key] for key in market_to_success.keys()}
 
     # def main_relation_classifier(self, stock_path,market_path):
     #     # check paths
@@ -87,13 +86,16 @@ market_list = ['Accident & Health Insurance (Financial)','Chemicals - Major Dive
 
 # TODO problem with drug manufactor major & drugs generics & Medical Appliances & Equipment (Healthcare)
 
+market_data = {}
+stock_data = {}
+
 
 # stock_path= sys.argv[1]
 # market_path = sys.argv[2]
 def work_on_it(db_name, stock):
     client = pymongo.MongoClient()
     db = client.get_database(db_name)
-    relations = DateManipulator(db).find_abs_relation(stock)
+    relations = DateManipulator(db).find_abs_relation(stock_data[stock], market_data)
     cl = db['metadata']
     cl.update_one(filter={'ticker': stock}, update={'$set': {'relations': relations}}, upsert=True)
 
@@ -110,6 +112,18 @@ def main():
     client = pymongo.MongoClient()
     db = client.get_database(db_name)
     stocks = db['stocks']
+    markets = db['markets']
+
+    for s in stocks.distinct(key='ticker'):
+        stock_data[s] = list(stocks.find({'ticker': s}))
+
+    for s in markets.distinct(key='market_name'):
+        for row in markets.find({'market_name': s}):
+            intdate = row['intdate']
+            if intdate not in market_data:
+                market_data[intdate] = []
+            market_data[intdate].append(row)
+
     pool.map(partial(work_on_it, db_name), stocks.distinct(key='ticker'))
 
 if __name__ == '__main__':
