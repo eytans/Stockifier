@@ -2,6 +2,7 @@ import pymongo
 import os
 import argparse
 import csv
+import datetime
 
 
 def main():
@@ -18,6 +19,9 @@ def main():
         market_name = os.path.basename(d)
         for csvf in os.listdir(d):
             cl.update_many(filter={'ticker': os.path.splitext(csvf)[0]}, update={"$set": {"market_name": market_name}})
+
+    for date in cl.distinct(key='date'):
+        cl.update_many(filter={'date': date}, update={"$set": {"intdate": datetime.datetime.strptime(date, '%Y-%m-%d').timestamp()}})
 
 
 if __name__ == '__main__':

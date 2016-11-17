@@ -21,15 +21,20 @@ def main():
         if doc["date"] not in stats[doc["market_name"]]:
             stats[doc["market_name"]][doc["date"]] = {'size': 0, 'volume': 0, 'value': 0}
             stats[doc["market_name"]][doc["date"]]['date'] = doc["date"]
+            stats[doc["market_name"]][doc["date"]]['intdate'] = doc["intdate"]
             stats[doc["market_name"]][doc["date"]]['market_name'] = doc["market_name"]
         current = stats[doc["market_name"]][doc["date"]]
         current["size"] += 1
         try:
-            current["volume"] += float(doc["volume"])
+            current["volume"] += doc["volume"]
         except:
             pass
         try:
-            current["value"] += float(doc["close"])*float(doc["volume"])  # sum of closed
+            current["close"] += doc["close"]  # sum of closed
+        except:
+            pass
+        try:
+            current["open"] += doc["open"]  # sum of closed
         except:
             pass
 

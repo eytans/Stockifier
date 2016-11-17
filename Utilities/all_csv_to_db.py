@@ -29,7 +29,14 @@ def main():
                 for row in reader:
                     doc = {}
                     for i, att in enumerate(names):
-                        doc[att] = row[i]
+                        try:
+                            doc[att] = float(row[i])
+                        except:
+                            doc[att] = row[i]
+                    if isinstance(doc['open'], float) and isinstance(doc['close'], float):
+                        doc['change'] = abs(doc['open'] - doc['close']) / doc['open']
+                    else:
+                        doc['change'] = 0
 
                     if check_if_new:
                         pass

@@ -1,7 +1,8 @@
 import csv
-import enumifiers
-import classifiers
+from . import enumifiers
+from . import classifiers
 from unittest import TestCase
+from sklearn.model_selection import cross_val_score
 
 
 class TestGet_general_classifier(TestCase):
@@ -31,3 +32,4 @@ class Test_StockData(TestCase):
     def test_stocks_classifier_with_enumifiers(self):
         clf = classifiers.get_general_classifier(self.samples.data, self.results)
         self.assertIsNotNone(clf)
+        print(cross_val_score(clf, self.samples.data, self.results))
