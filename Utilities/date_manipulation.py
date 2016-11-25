@@ -5,11 +5,6 @@ from functools import partial
 
 
 class DateManipulator(object):
-    def __init__(self, db):
-        self.db = db
-        self.stocks_collection = db['stocks']
-        self.markets_collection = db['markets']
-
     # def find_maximal_for_stock_and_market(self, path_to_stock,path_to_market):
     #     first,last = self.maximal_shared_range_dir(path_to_market)
     #     stock_file = open(path_to_stock,'r')
@@ -92,12 +87,12 @@ stock_data = {}
 
 # stock_path= sys.argv[1]
 # market_path = sys.argv[2]
-def work_on_it(db_name, stock):
+def work_on_it(stock_data, market_data, db_name):
     client = pymongo.MongoClient()
     db = client.get_database(db_name)
-    relations = DateManipulator(db).find_abs_relation(stock_data[stock], market_data)
+    relations = DateManipulator().find_abs_relation(stock_data, market_data)
     cl = db['metadata']
-    cl.update_one(filter={'ticker': stock}, update={'$set': {'relations': relations}}, upsert=True)
+    cl.update_one(filter={'ticker': stock_data[0]['ticker']}, update={'$set': {'relations': relations}}, upsert=True)
 
 
 def main():
@@ -105,7 +100,7 @@ def main():
     parser.add_argument('-d', '--database', default='exchange', help='name of database to connect to')
     args = parser.parse_args()
 
-    pool = multiprocessing.Pool()
+    pool = multiprocessing.Pool(1)
 
     db_name = args.database
 
@@ -124,7 +119,8 @@ def main():
                 market_data[intdate] = []
             market_data[intdate].append(row)
 
-    pool.map(partial(work_on_it, db_name), stocks.distinct(key='ticker'))
+    pool.map(partial(work_on_it, market_data=market_data, db_name=db_name),
+             map(lambda x: stock_data[x], stocks.distinct(key='ticker')))
 
 if __name__ == '__main__':
     main()
