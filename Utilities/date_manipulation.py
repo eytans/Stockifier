@@ -32,7 +32,7 @@ class DateManipulator(object):
         market_to_len = {}
         market_to_success = {}
         for day in stock_list:
-            markets_data = markets[day['intdate']]
+            markets_data = markets[day['date']]
             daily_change = day['change']
             for m_day in markets_data:
                 m_name = m_day['market_name']
@@ -114,10 +114,10 @@ def main():
 
     for s in markets.distinct(key='market_name'):
         for row in markets.find({'market_name': s}):
-            intdate = row['intdate']
-            if intdate not in market_data:
-                market_data[intdate] = []
-            market_data[intdate].append(row)
+            date = row['date']
+            if date not in market_data:
+                market_data[date] = []
+            market_data[date].append(row)
 
     pool.map(partial(work_on_it, market_data=market_data, db_name=db_name),
              map(lambda x: stock_data[x], stocks.distinct(key='ticker')))
