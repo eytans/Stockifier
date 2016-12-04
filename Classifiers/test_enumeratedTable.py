@@ -1,5 +1,5 @@
 from unittest import TestCase
-import enumifiers
+from enumifiers import *
 import csv
 
 

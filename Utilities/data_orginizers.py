@@ -30,8 +30,8 @@ class LearningData(object):
             return self.sorting_dict[item]
 
     def __init__(self, database='exchange', legal_markets=None):
-        client = pymongo.MongoClient()
-        db = client[database]
+        self.client = pymongo.MongoClient()
+        db = self.client[database]
         self.database = database
         self.markets = db['markets']
         self.stocks = db['stocks']
@@ -78,9 +78,9 @@ class LearningData(object):
 
     def retreive_daily_markets_data(self):
         search_doc = {}
-        if legal_markets:
-            search_doc['market_name'] = {'$in': legal_markets}
-        curs = cl.find(search_doc).sort({'intdate': 1})
+        if self.legal_markets:
+            search_doc['market_name'] = {'$in': self.legal_markets}
+        curs = self.client.find(search_doc).sort({'intdate': 1})
         data = []
         new = None
         for c in curs:
@@ -95,7 +95,7 @@ class LearningData(object):
         if new:
             new.sort(key=lambda doc: doc['market_name'])
             data.append(new)
-        market_sorter = dictionary_sorter(data[0][0])
+        market_sorter = self.DictionarySorter(data[0][0])
         return [[market_sorter(m) for m in day] for day in data]
 
     def get_stock_ordered_data(self, stock_name, database='exchange'):
@@ -103,7 +103,7 @@ class LearningData(object):
         db = client[database]
         cl = db['stocks']
         data = list(cl.find({'ticker': stock_name}).sort({'intdate': 1}))
-        stock_sorter = dictionary_sorter(data[0])
+        stock_sorter = self.DictionarySorter(data[0])
         data = [stock_sorter(s) for s in data]
         return data
 

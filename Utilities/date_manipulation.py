@@ -87,9 +87,7 @@ stock_data = {}
 
 # stock_path= sys.argv[1]
 # market_path = sys.argv[2]
-def work_on_it(stock_data, market_data, db_name):
-    client = pymongo.MongoClient()
-    db = client.get_database(db_name)
+def work_on_it(stock_data, market_data, db_name,db):
     relations = DateManipulator().find_abs_relation(stock_data, market_data)
     cl = db['metadata']
     cl.update_one(filter={'ticker': stock_data[0]['ticker']}, update={'$set': {'relations': relations}}, upsert=True)
@@ -119,7 +117,9 @@ def main():
                 market_data[date] = []
             market_data[date].append(row)
 
-    pool.map(partial(work_on_it, market_data=market_data, db_name=db_name),
+    client = pymongo.MongoClient()
+    db = client.get_database(db_name)
+    pool.map(partial(work_on_it, market_data=market_data, db_name=db_name,db=db),
              map(lambda x: stock_data[x], stocks.distinct(key='ticker')))
 
 if __name__ == '__main__':
