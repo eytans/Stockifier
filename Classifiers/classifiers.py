@@ -15,10 +15,12 @@ def apply_func(func, iterable):
 
 
 def get_by_market_classifier(classes, start, end):
-    data = [val for val in filter(lambda x: end >= x >= start, retreive_daily_markets_data())]
+    ld = LearningData()
+    data = [val for val in filter(lambda x: end >= x >= start, ld.retreive_daily_markets_data())]
     return sklearn.ensemble.AdaBoostClassifier().fit(data, classes)
 
 
 def train_stock(stock_data):
-    data, results = get_data_and_results_from_stock(stock_data)
-    return __get_general_classifier(data, results)
+    ld = LearningData()
+    data, results = ld.get_data_and_results_from_stock(stock_data)
+    return get_general_classifier(data, results)
