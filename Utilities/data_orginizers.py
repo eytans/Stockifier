@@ -7,8 +7,8 @@ import Utilities
 
 class LearningData(object):
     # save data as database to names to pandas.DataFrames
-    __market_data = {}
-    __stock_data = {}
+    _market_data = {}
+    _stock_data = {}
 
     class DictionarySorter(object):
         '''Using a sample dictionary create a fast mapping from key to index.
@@ -47,69 +47,72 @@ class LearningData(object):
         self.market_sorter = LearningData.DictionarySorter(self.markets.find_one())
         self.stock_sorter = LearningData.DictionarySorter(self.stocks.find_one())
 
-    def __init_market_data(self, market_name=None):
-        if self.database not in LearningData.__market_data:
-            LearningData.__market_data[self.database] = {}
-        data = LearningData.__market_data[self.database]
+    def __init_market_data(self, market_name=None, force=False):
+        if self.database not in LearningData._market_data:
+            LearningData._market_data[self.database] = {}
+        data = LearningData._market_data[self.database]
         if market_name:
-            if market_name not in data:
+            if market_name not in data or force:
                 query = {'market_name': market_name}
-                data[market_name] = pd.DataFrame(list(self.markets.find(query)))
+                data[market_name] = pd.DataFrame(list(self.markets.find(query))).set_index(['date'])
         else:
             for m in self.markets.distinct('market_name'):
-                if m in data:
+                if m in data or not force:
                     continue
                 query = {'market_name': m}
-                data[m] = pd.DataFrame(list(self.markets.find(query)))
+                data[m] = pd.DataFrame(list(self.markets.find(query))).set_index(['date'])
+
+    def __init_stock_data(self, stock_name=None, force=False):
+        if self.database not in LearningData._stock_data:
+            LearningData._stock_data[self.database] = {}
+        data = LearningData._stock_data[self.database]
+        if stock_name:
+            if stock_name not in data or force:
+                query = {'ticker': stock_name}
+                data[stock_name] = pd.DataFrame(list(self.stocks.find(query))).set_index(['date'])
+        else:
+            for doc in self.stocks.distinct('ticker'):
+                name = doc['ticker']
+                if name not in data or force:
+                    query = {'ticker': name}
+                    data[name] = pd.DataFrame(list(self.stocks.find(query))).set_index(['date'])
 
     @classmethod
     def save(cls, path=None):
         if not path:
             path = Utilities.default_pickle
-        data = (cls.__market_data, cls.__stock_data)
+        data = (cls._market_data, cls._stock_data)
         pickle.dump(data, path)
 
     @classmethod
     def load(cls, path=None):
         if not os.path.exists(path):
             return
-        cls.__market_data, cls.__stock_data = pickle.load(path)
+        cls._market_data, cls._stock_data = pickle.load(path)
 
-    def get_market_data(self, market_name=None, startdate=None, enddate=None):
-        self.__init_market_data(market_name)
+    def get_market_data(self, market_name=None, startdate=None, enddate=None, force=False):
+        self.__init_market_data(market_name, force)
         if not market_name:
-            df = LearningData.__market_data[self.database]
+            df = LearningData._market_data[self.database]
         else:
-            df = LearningData.__market_data[self.database][market_name]
-        return self.slice_by_date(df, enddate, startdate)
+            df = LearningData._market_data[self.database][market_name]
+        return self.slice_by_date(df, startdate, enddate)
 
-    def slice_by_date(self, df, enddate, startdate):
+    @staticmethod
+    def slice_by_date(df, startdate, enddate):
         if startdate and not enddate:
-            return df[df.date > startdate]
+            return df[startdate:]
         if enddate and not startdate:
-            return df[df.date < enddate]
+            return df[:enddate]
+        elif enddate and startdate:
+            return df[startdate:enddate]
         else:
-            return df[df.date < enddate, df.date > startdate]
+            return df
 
-    def __init_stock_data(self, stock_name=None):
-        if self.database not in LearningData.__stock_data:
-            LearningData.__stock_data[self.database] = {}
-        data = LearningData.__stock_data[self.database]
-        if stock_name:
-            if stock_name not in data[self.database]:
-                query = {'ticker': stock_name}
-                data[stock_name] = pd.DataFrame(list(self.stocks.find(query)))
-        else:
-            for doc in self.stocks.distinct('ticker'):
-                name = doc['ticker']
-                if name not in data:
-                    query = {'ticker': name}
-                    data[name] = pd.DataFrame(list(self.stocks.find(query)))
-
-    def get_stock_data(self, stock_name=None, startdate=None, enddate=None):
-        self.__init_stock_data(stock_name)
+    def get_stock_data(self, stock_name=None, startdate=None, enddate=None, force=False):
+        self.__init_stock_data(stock_name, force)
         if not stock_name:
-            df = LearningData.__stock_data[self.database]
+            df = LearningData._stock_data[self.database]
         else:
-            df = LearningData.__stock_data[self.database][stock_name]
-        return self.slice_by_date(df, enddate, startdate)
+            df = LearningData._stock_data[self.database][stock_name]
+        return self.slice_by_date(df, startdate, enddate)
