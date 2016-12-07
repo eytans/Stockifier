@@ -1,7 +1,9 @@
 import pymongo
+import pandas as pd
 
 
 class LearningData(object):
+    # save data as database to names to pandas.DataFrames
     __market_data = {}
     __stock_data = {}
 
@@ -41,75 +43,57 @@ class LearningData(object):
 
         self.market_sorter = LearningData.DictionarySorter(self.markets.find_one())
         self.stock_sorter = LearningData.DictionarySorter(self.stocks.find_one())
-        self.stock_data = {}
 
-    def __init_market_data(self):
+    def __init_market_data(self, market_name=None):
         if self.database not in LearningData.__market_data:
             LearningData.__market_data[self.database] = {}
-            data = LearningData.__market_data[self.database]
-            for m in self.markets.find():
-                if m['market_name'] not in data:
-                    data[m['market_name']] = {}
-                data[m['market_name']][m['date']] = m
+        data = LearningData.__market_data[self.database]
+        if market_name:
+            if market_name not in data:
+                query = {'market_name': market_name}
+                data[market_name] = pd.DataFrame(list(self.markets.find(query)))
+        else:
+            for m in self.markets.distinct('market_name'):
+                if m in data:
+                    continue
+                query = {'market_name': m}
+                data[m] = pd.DataFrame(list(self.markets.find(query)))
 
-    def get_market_data(self):
-        self.__init_market_data()
-        return LearningData.__market_data[self.database]
+    def get_market_data(self, market_name=None, startdate=None, enddate=None):
+        self.__init_market_data(market_name)
+        if not market_name:
+            df = LearningData.__market_data[self.database]
+        else:
+            df = LearningData.__market_data[self.database][market_name]
+        return self.slice_by_date(df, enddate, startdate)
 
-    def __init_stock_data(self):
+    def slice_by_date(self, df, enddate, startdate):
+        if startdate and not enddate:
+            return df[df.date > startdate]
+        if enddate and not startdate:
+            return df[df.date < enddate]
+        else:
+            return df[df.date < enddate, df.date > startdate]
+
+    def __init_stock_data(self, stock_name=None):
         if self.database not in LearningData.__stock_data:
             LearningData.__stock_data[self.database] = {}
-            data = LearningData.__stock_data[self.database]
-            for doc in self.stocks.find():
+        data = LearningData.__stock_data[self.database]
+        if stock_name:
+            if stock_name not in data[self.database]:
+                query = {'ticker': stock_name}
+                data[stock_name] = pd.DataFrame(list(self.stocks.find(query)))
+        else:
+            for doc in self.stocks.distinct('ticker'):
                 name = doc['ticker']
                 if name not in data:
-                    data[name] = {}
-                data[name][doc['date']] = doc
+                    query = {'ticker': name}
+                    data[name] = pd.DataFrame(list(self.stocks.find(query)))
 
-    def get_stock_data(self, stock_name=None):
-        self.__init_stock_data()
+    def get_stock_data(self, stock_name=None, startdate=None, enddate=None):
+        self.__init_stock_data(stock_name)
         if not stock_name:
-            return LearningData.__stock_data[self.database]
-        return LearningData.__stock_data[self.database][stock_name]
-
-
-    def stock_classifier_data(self):
-        pass
-
-    def retreive_daily_markets_data(self):
-        search_doc = {}
-        if self.legal_markets:
-            search_doc['market_name'] = {'$in': self.legal_markets}
-        curs = self.client.find(search_doc).sort({'intdate': 1})
-        data = []
-        new = None
-        for c in curs:
-            if not new:
-                new = [c]
-            elif c['intdate'] == new[0]['intdate']:
-                new.append(c)
-            else:
-                new.sort(key=lambda doc: doc['market_name'])
-                data.append(new)
-                new = None
-        if new:
-            new.sort(key=lambda doc: doc['market_name'])
-            data.append(new)
-        market_sorter = self.DictionarySorter(data[0][0])
-        return [[market_sorter(m) for m in day] for day in data]
-
-    def get_stock_ordered_data(self, stock_name, database='exchange'):
-        client = pymongo.MongoClient()
-        db = client[database]
-        cl = db['stocks']
-        data = list(cl.find({'ticker': stock_name}).sort({'intdate': 1}))
-        stock_sorter = self.DictionarySorter(data[0])
-        data = [stock_sorter(s) for s in data]
-        return data
-
-    def retrieve_stock_data_and_classes(self, stock_name, database='exchange'):
-        data = self.get_stock_ordered_data(stock_name, database)
-        results = list(map(lambda d: (d['close'] - d['open']) * d['open'] < 0.3, data[1:]))
-        data = list(map(lambda d: list(d.values()), data))
-        data = data[:-1]
-        return data, results
+            df = LearningData.__stock_data[self.database]
+        else:
+            df = LearningData.__stock_data[self.database][stock_name]
+        return self.slice_by_date(df, enddate, startdate)

@@ -9,6 +9,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--database', default='exchange', help='name of database to connect to')
     parser.add_argument('-m', '--daymemory', default=7, type=int, help='name of database to connect to')
+
     args = parser.parse_args()
 
     client = pymongo.MongoClient()
