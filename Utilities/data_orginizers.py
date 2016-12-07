@@ -1,5 +1,8 @@
 import pymongo
+import pickle
+import os
 import pandas as pd
+import Utilities
 
 
 class LearningData(object):
@@ -58,6 +61,19 @@ class LearningData(object):
                     continue
                 query = {'market_name': m}
                 data[m] = pd.DataFrame(list(self.markets.find(query)))
+
+    @classmethod
+    def save(cls, path=None):
+        if not path:
+            path = Utilities.default_pickle
+        data = (cls.__market_data, cls.__stock_data)
+        pickle.dump(data, path)
+
+    @classmethod
+    def load(cls, path=None):
+        if not os.path.exists(path):
+            return
+        cls.__market_data, cls.__stock_data = pickle.load(path)
 
     def get_market_data(self, market_name=None, startdate=None, enddate=None):
         self.__init_market_data(market_name)
