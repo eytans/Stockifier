@@ -34,7 +34,8 @@ def main():
                     if len(m_prev) < j + 1:
                         continue
                     update['markets_' + str(j) + '_days_before'][market_name] = m_prev[j]
-            cl.update_one(filter={'_id': row['_id']}, update={'$set': update})
+            if update:
+                cl.update_one(filter={'_id': row['_id']}, update={'$set': update})
             stock_prev.insert(0, row['_id'])
             for market_name in market_data.keys():
                 market_prev[market_name].insert(0, market_data[market_name].get_value(row.name, '_id'))
