@@ -57,7 +57,7 @@ class LearningData(object):
                 data[market_name] = pd.DataFrame(list(self.markets.find(query))).set_index(['date'])
         else:
             for m in self.markets.distinct('market_name'):
-                if m in data or not force:
+                if m in data and not force:
                     continue
                 query = {'market_name': m}
                 data[m] = pd.DataFrame(list(self.markets.find(query))).set_index(['date'])
@@ -81,13 +81,15 @@ class LearningData(object):
         if not path:
             path = Utilities.default_pickle
         data = (cls._market_data, cls._stock_data)
-        pickle.dump(data, path)
+        with open(path, 'wb') as out:
+            pickle.dump(data, out)
 
     @classmethod
     def load(cls, path=None):
         if not os.path.exists(path):
             return
-        cls._market_data, cls._stock_data = pickle.load(path)
+        with open(path, 'rb') as data:
+            cls._market_data, cls._stock_data = pickle.load(data)
 
     def get_market_data(self, market_name=None, startdate=None, enddate=None, force=False):
         self.__init_market_data(market_name, force)
