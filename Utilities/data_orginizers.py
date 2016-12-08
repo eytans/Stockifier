@@ -71,8 +71,7 @@ class LearningData(object):
                 query = {'ticker': stock_name}
                 data[stock_name] = pd.DataFrame(list(self.stocks.find(query))).set_index(['date'])
         else:
-            for doc in self.stocks.distinct('ticker'):
-                name = doc['ticker']
+            for name in self.stocks.distinct('ticker'):
                 if name not in data or force:
                     query = {'ticker': name}
                     data[name] = pd.DataFrame(list(self.stocks.find(query))).set_index(['date'])
