@@ -108,7 +108,7 @@ class LearningData(object):
         elif enddate and startdate:
             return df[startdate:enddate]
         else:
-            return df
+            return df.copy(False)
 
     def get_stock_data(self, stock_name=None, startdate=None, enddate=None, force=False):
         self.__init_stock_data(stock_name, force)
@@ -117,3 +117,30 @@ class LearningData(object):
         else:
             df = LearningData._stock_data[self.database][stock_name]
         return self.slice_by_date(df, startdate, enddate)
+
+    def flat_pointers(self, df, stock_range, market_range=None, legal_markets=None):
+        if not market_range:
+            market_range = stock_range
+        # TODO: less hacky range
+        all_stock_history_fields = [Utilities.stock_history_field(i) for i in range(1, stock_range + 10000)]
+        all_market_history_fields = [Utilities.market_history_field(i) for i in range(1, market_range + 10000)]
+        bad_stock_names = set(all_stock_history_fields[stock_range:])
+        bad_market_names = set(all_market_history_fields[market_range:])
+        stock_drop_columns = [c for c in df.columns if c in bad_stock_names]
+        market_drop_columns = [c for c in df.columns if c in bad_market_names]
+        # drops all columns which shouldn't be here (all the names gathered)
+        df.drop(stock_drop_columns + market_drop_columns, axis=1, inplace=True)
+
+        # now for all fields that weren't dropped start creating a ton of features
+        all_stock_history_fields = set(all_stock_history_fields)
+        all_market_history_fields = set(all_market_history_fields)
+        for c in df.columns:
+            if c in all_stock_history_fields:
+                # TODO: move all attributes to relevant cols
+                # TODO: drop pointer
+                pass
+            elif c in all_market_history_fields:
+                # TODO: move all attributes to relevant cols if in legal markets
+                # TODO: drop pointer
+                pass
+        return df

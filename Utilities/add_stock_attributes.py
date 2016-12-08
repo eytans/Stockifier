@@ -1,8 +1,7 @@
 import pymongo
-import os
 import argparse
+import Utilities
 from Utilities.data_orginizers import LearningData
-import datetime
 
 
 def main():
@@ -17,6 +16,10 @@ def main():
     cl = db['stocks']
 
     learning_data = LearningData()
+    update = {}
+    for j in range(0, args.daymemory):
+        update[Utilities.market_history_field(j)] = {}
+    cl.update_many(filter={}, update={'$set': update})
     market_data = learning_data.get_market_data()
     stock_data = learning_data.get_stock_data()
     for stock_name, data in stock_data.items():
@@ -27,15 +30,14 @@ def main():
             for j in range(0, args.daymemory):
                 if len(stock_prev) < j + 1:
                     continue
-                update[str(j) + '_days_before'] = stock_prev[j]
-                update['markets_' + str(j) + '_days_before'] = {}
+                update[Utilities.stock_history_field(j)] = stock_prev[j]
                 for market_name in market_data.keys():
                     m_prev = market_prev[market_name]
                     if len(m_prev) < j + 1:
                         continue
-                    update['markets_' + str(j) + '_days_before'][market_name] = m_prev[j]
-            if update:
-                cl.update_one(filter={'_id': row['_id']}, update={'$set': update})
+                    update[Utilities.market_history_field(j)+'.'+market_name] = m_prev[j]
+
+            cl.update_one(filter={'_id': row['_id']}, update={'$set': update})
             stock_prev.insert(0, row['_id'])
             for market_name in market_data.keys():
                 market_prev[market_name].insert(0, market_data[market_name].get_value(row.name, '_id'))
