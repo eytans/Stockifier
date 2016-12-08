@@ -20,18 +20,24 @@ def main():
     market_data = learning_data.get_market_data()
     stock_data = learning_data.get_stock_data()
     for stock_name, data in stock_data.items():
-        for date, doc in data.items():
+        stock_prev = []
+        market_prev = {market_name: [] for market_name in market_data.keys()}
+        for date, row in data.iterrows():
             update = {}
-            for j in range(1, 1 + args.daymemory):
-                new_date = date - datetime.timedelta(days=j)
-                update[str(j) + '_days_before'] = None
-                if new_date in data:
-                    update[str(j) + '_days_before'] = data[new_date]['_id']
+            for j in range(0, args.daymemory):
+                if len(stock_prev) < j + 1:
+                    continue
+                update[str(j) + '_days_before'] = stock_prev[j]
+                update['markets_' + str(j) + '_days_before'] = {}
                 for market_name in market_data.keys():
-                    update['markets_' + str(j) + '_days_before'] = {market_name: None}
-                    if new_date in market_data[market_name]:
-                        update['markets_' + str(j) + '_days_before'] = {market_name: market_data[market_name][new_date]['_id']}
-            cl.update_one(filter={'_id': doc['_id']}, update={'$set': update})
+                    m_prev = market_prev[market_name]
+                    if len(m_prev) < j + 1:
+                        continue
+                    update['markets_' + str(j) + '_days_before'][market_name] = m_prev[j]
+            cl.update_one(filter={'_id': row['_id']}, update={'$set': update})
+            stock_prev.insert(0, row['_id'])
+            for market_name in market_data.keys():
+                market_prev[market_name].insert(0, market_data[market_name].get_value(row.name, '_id'))
 
 
 if __name__ == '__main__':
