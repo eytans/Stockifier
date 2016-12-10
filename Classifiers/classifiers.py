@@ -1,7 +1,7 @@
 import sklearn.ensemble
-from itertools import tee
-from collections import OrderedDict
+from itertools import islice
 from Utilities.data_orginizers import *
+import Utilities
 
 
 def get_general_classifier(data, classes):
@@ -14,13 +14,15 @@ def apply_func(func, iterable):
         yield i
 
 
-def get_by_market_classifier(classes, start, end):
-    ld = LearningData()
-    data = [val for val in filter(lambda x: end >= x >= start, ld.retreive_daily_markets_data())]
-    return sklearn.ensemble.AdaBoostClassifier().fit(data, classes)
+def get_float_change(df, days_forward):
+    return [row['close'] - row[Utilities.stock_history_field(days_forward)]
+            for row in islice(df.iterrows(), days_forward, None)] + [0]*days_forward
 
 
-def train_stock(stock_data):
+def ada_boosted_by_change(days):
     ld = LearningData()
-    data, results = ld.get_data_and_results_from_stock(stock_data)
-    return get_general_classifier(data, results)
+    df = ld.flat_pointers(ld.get_stock_data('ABC'), 10)
+    classes = get_float_change(df, days)
+    return get_general_classifier(df, classes)
+
+

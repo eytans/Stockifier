@@ -1,0 +1,17 @@
+add stock attributes
+
+Utilities:
+ all helpers in __init__
+
+learning data:
+ by id
+ history_fields
+ drop history
+ flat pointers
+ save
+ load
+
+classifiers:
+ get_float_change
+ ada_boost_by_change
+
