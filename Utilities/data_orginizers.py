@@ -3,6 +3,9 @@ import pickle
 import os
 import pandas as pd
 import Utilities
+import datetime
+import threading
+from pathos import multiprocessing
 
 
 class DictionarySorter(object):
@@ -63,19 +66,40 @@ class LearningData(object):
                 query = {'market_name': m}
                 data[m] = pd.DataFrame(list(self.markets.find(query))).set_index(['date'])
 
+    def __stock_data_pickle_name(self, stock_name):
+        return os.path.join(Utilities.project_dir, '{}_{}.pickle'.format(self.database, stock_name))
+
     def __init_stock_data(self, stock_name=None, force=False):
         if self.database not in LearningData._stock_data:
-            LearningData._stock_data[self.database] = {}
+            LearningData._stock_data[self.database] = StockDataAccessor()
         data = LearningData._stock_data[self.database]
+        # TODO: non hacky version preffered
+        middle = datetime.datetime(2005, 1, 1)
         if stock_name:
             if stock_name not in data or force:
-                query = {'ticker': stock_name}
-                data[stock_name] = pd.DataFrame(list(self.stocks.find(query))).set_index(['date'])
+                name = stock_name
+                ld = LearningData()
+                query = {'ticker': name}
+                query['date'] = {'$lt': middle}
+                first = pd.DataFrame(list(ld.stocks.find(query)))
+                query['date'] = {'$gte': middle}
+                second = pd.DataFrame(list(ld.stocks.find(query)))
+                pickle.dump(pd.concat([first, second]).set_index(['date']), open(self.__stock_data_pickle_name(name), 'wb'))
         else:
-            for name in self.stocks.distinct('ticker'):
-                if name not in data or force:
-                    query = {'ticker': name}
-                    data[name] = pd.DataFrame(list(self.stocks.find(query))).set_index(['date'])
+            names = filter(lambda name: name not in data or force, list(self.stocks.distinct('ticker')))
+            for name in names:
+                self.__init_stock_data(name, force)
+
+            # def work_on_it(name):
+            #     ld = LearningData()
+            #     query = {'ticker': name}
+            #     query['date'] = {'$lt': middle}
+            #     first = pd.DataFrame(list(ld.stocks.find(query)))
+            #     query['date'] = {'$gte': middle}
+            #     second = pd.DataFrame(list(ld.stocks.find(query)))
+            #     data[name] = pd.concat([first, second]).set_index(['date'])
+            #
+            # p.map(work_on_it, names)
 
     def __init_by_id_data(self, force=False):
         if self._market_by_id is None or force:
@@ -95,7 +119,7 @@ class LearningData(object):
     def save(cls, path=None):
         if not path:
             path = Utilities.default_pickle
-        data = (cls._market_data, cls._stock_data)
+        data = (cls._market_data, cls._stock_data, cls._market_by_id, cls._stock_by_id)
         with open(path, 'wb') as out:
             pickle.dump(data, out)
 
@@ -104,7 +128,7 @@ class LearningData(object):
         if not os.path.exists(path):
             return
         with open(path, 'rb') as data:
-            cls._market_data, cls._stock_data = pickle.load(data)
+            cls._market_data, cls._stock_data, cls._market_by_id, cls._stock_by_id = pickle.load(data)
 
     def get_market_data(self, market_name=None, startdate=None, enddate=None, force=False):
         self.__init_market_data(market_name, force)
