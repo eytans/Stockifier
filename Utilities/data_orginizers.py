@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import Utilities
 import datetime
+import enum
 import threading
 from pathos import multiprocessing
 
@@ -35,6 +36,36 @@ class DictionarySorter(object):
 
 
 class LearningData(object):
+    # TODO: only supports one database for now!!! this needs to change for tests.
+    class DataAccessor(enum.Enum):
+        stock = 1
+
+        def __init__(self, name):
+            self.dir_path = os.path.join(Utilities.project_dir, 'cache')
+            if not os.path.isdir(self.dir_path):
+                os.makedirs(self.dir_path)
+            if name not in LearningData.DataAccessor:
+                raise RuntimeError("bad name for data accessor")
+            self.name = name
+
+        def __get_file_name(self, item):
+            return os.path.join(self.dir_path, '{}_{}.p'.format(self.name, item))
+
+        def __contains__(self, item):
+            return os.path.exists(self.__get_file_name(item))
+
+        def __getitem__(self, item):
+            if not self.__contains__(item):
+                raise KeyError(item)
+            fn = self.__get_file_name(item)
+            with open(fn, 'rb') as data:
+                return pickle.load(data)
+
+        def __setitem__(self, key, value):
+            fn = self.__get_file_name(key)
+            with open(fn, 'wb') as out:
+                pickle.dump(value, out)
+
     # save data as database to names to pandas.DataFrames
     _market_data = {}
     _stock_data = {}
@@ -66,14 +97,11 @@ class LearningData(object):
                 query = {'market_name': m}
                 data[m] = pd.DataFrame(list(self.markets.find(query))).set_index(['date'])
 
-    def __stock_data_pickle_name(self, stock_name):
-        return os.path.join(Utilities.project_dir, '{}_{}.pickle'.format(self.database, stock_name))
-
     def __init_stock_data(self, stock_name=None, force=False):
         if self.database not in LearningData._stock_data:
-            LearningData._stock_data[self.database] = StockDataAccessor()
-        data = LearningData._stock_data[self.database]
-        # TODO: non hacky version preffered
+            self._stock_data[self.database] = self.DataAccessor(self.DataAccessor.stock)
+        data = self._stock_data[self.database]
+        # TODO: non hacky version of date splitting preffered (so we wont timeout in mongo)
         middle = datetime.datetime(2005, 1, 1)
         if stock_name:
             if stock_name not in data or force:
@@ -84,7 +112,7 @@ class LearningData(object):
                 first = pd.DataFrame(list(ld.stocks.find(query)))
                 query['date'] = {'$gte': middle}
                 second = pd.DataFrame(list(ld.stocks.find(query)))
-                pickle.dump(pd.concat([first, second]).set_index(['date']), open(self.__stock_data_pickle_name(name), 'wb'))
+                data[name] = pd.concat([first, second]).set_index(['date'])
         else:
             names = filter(lambda name: name not in data or force, list(self.stocks.distinct('ticker')))
             for name in names:
@@ -119,7 +147,7 @@ class LearningData(object):
     def save(cls, path=None):
         if not path:
             path = Utilities.default_pickle
-        data = (cls._market_data, cls._stock_data, cls._market_by_id, cls._stock_by_id)
+        data = (cls._market_data, cls._market_by_id, cls._stock_by_id)
         with open(path, 'wb') as out:
             pickle.dump(data, out)
 
@@ -128,7 +156,7 @@ class LearningData(object):
         if not os.path.exists(path):
             return
         with open(path, 'rb') as data:
-            cls._market_data, cls._stock_data, cls._market_by_id, cls._stock_by_id = pickle.load(data)
+            cls._market_data, cls._market_by_id, cls._stock_by_id = pickle.load(data)
 
     def get_market_data(self, market_name=None, startdate=None, enddate=None, force=False):
         self.__init_market_data(market_name, force)
@@ -149,7 +177,7 @@ class LearningData(object):
         else:
             return df.copy(False)
 
-    def get_stock_data(self, stock_name=None, startdate=None, enddate=None, force=False):
+    def get_stock_data(self, stock_name, startdate=None, enddate=None, force=False):
         self.__init_stock_data(stock_name, force)
         if not stock_name:
             return LearningData._stock_data[self.database]
