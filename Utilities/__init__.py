@@ -20,3 +20,16 @@ def clean_market_name(market):
 def market_history_field(day, market, field=''):
     return field + clean_market_name(market) + '_' + str(day) + '_days_before'
 
+
+def dataframe_safe_loc(df, row_name):
+    try:
+        return df.loc[row_name]
+    except:
+        return None
+
+
+def dataframe_safe_get_value(df, row_name, col):
+    try:
+        return df.get_value(row_name, col)
+    except:
+        return None
