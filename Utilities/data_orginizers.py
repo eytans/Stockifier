@@ -4,8 +4,10 @@ import os
 import pandas as pd
 import Utilities
 import datetime
-import threading
+import enum
+import gzip
 from pathos import multiprocessing
+from collections.abc import Mapping
 
 
 class DictionarySorter(object):
@@ -35,6 +37,50 @@ class DictionarySorter(object):
 
 
 class LearningData(object):
+    # TODO: only supports one database for now!!! this needs to change for tests.
+    class DataAccessor(Mapping):
+        class Names(enum.Enum):
+            stock = 1
+
+        def __init__(self, name):
+            self.dir_path = os.path.join(Utilities.project_dir, 'cache')
+            if not os.path.isdir(self.dir_path):
+                os.makedirs(self.dir_path)
+            if name not in LearningData.DataAccessor.Names:
+                raise RuntimeError("bad name for data accessor")
+            self.name = name
+
+        def __get_file_name(self, item):
+            return os.path.join(self.dir_path, '{}_{}.p.gz'.format(self.name, item))
+
+        def __contains__(self, item):
+            return os.path.exists(self.__get_file_name(item))
+
+        def __getitem__(self, item):
+            if not self.__contains__(item):
+                raise KeyError(item)
+            fn = self.__get_file_name(item)
+            with gzip.open(fn, 'rb') as data:
+                return pickle.load(data)
+
+        def __setitem__(self, key, value):
+            fn = self.__get_file_name(key)
+            with gzip.open(fn, 'wb') as out:
+                pickle.dump(value, out)
+
+        def __iteration_helper(self):
+            for f in os.listdir(self.dir_path):
+                if f.startswith(self.name):
+                    item = f.split('_')[1].split('.')[0]
+                    yield item
+
+        def __iter__(self):
+            for item in self.__iteration_helper():
+                yield item, self[item]
+
+        def __len__(self):
+            return len(list(self.__iteration_helper()))
+
     # save data as database to names to pandas.DataFrames
     _market_data = {}
     _stock_data = {}
@@ -66,14 +112,11 @@ class LearningData(object):
                 query = {'market_name': m}
                 data[m] = pd.DataFrame(list(self.markets.find(query))).set_index(['date'])
 
-    def __stock_data_pickle_name(self, stock_name):
-        return os.path.join(Utilities.project_dir, '{}_{}.pickle'.format(self.database, stock_name))
-
     def __init_stock_data(self, stock_name=None, force=False):
         if self.database not in LearningData._stock_data:
-            LearningData._stock_data[self.database] = StockDataAccessor()
-        data = LearningData._stock_data[self.database]
-        # TODO: non hacky version preffered
+            self._stock_data[self.database] = self.DataAccessor(self.DataAccessor.Names.stock)
+        data = self._stock_data[self.database]
+        # TODO: non hacky version of date splitting preffered (so we wont timeout in mongo)
         middle = datetime.datetime(2005, 1, 1)
         if stock_name:
             if stock_name not in data or force:
@@ -84,7 +127,7 @@ class LearningData(object):
                 first = pd.DataFrame(list(ld.stocks.find(query)))
                 query['date'] = {'$gte': middle}
                 second = pd.DataFrame(list(ld.stocks.find(query)))
-                pickle.dump(pd.concat([first, second]).set_index(['date']), open(self.__stock_data_pickle_name(name), 'wb'))
+                data[name] = pd.concat([first, second]).set_index(['date'])
         else:
             names = filter(lambda name: name not in data or force, list(self.stocks.distinct('ticker')))
             for name in names:
@@ -107,28 +150,32 @@ class LearningData(object):
             frames = self._market_data[self.database].values()
             self._market_by_id = pd.concat(frames)
             self._market_by_id = self._market_by_id.set_index('_id')
-            self.drop_history_fields(self._market_by_id)
+            self._market_by_id = self.drop_history_fields(self._market_by_id)
         if self._stock_by_id is None or force:
             self.__init_stock_data(force=force)
-            frames = self._stock_data[self.database].values()
-            self._stock_by_id = pd.concat(frames)
-            self._stock_by_id = self._stock_by_id.set_index('_id')
-            self.drop_history_fields(self._stock_by_id)
+            frames = None
+            for key, df in self._stock_data[self.database]:
+                cleaned = self.drop_history_fields(df)
+                if not frames:
+                    frames = cleaned
+                else:
+                    frames = pd.concat([cleaned, frames])
+            self._stock_by_id = frames.set_index('_id')
 
     @classmethod
     def save(cls, path=None):
         if not path:
             path = Utilities.default_pickle
-        data = (cls._market_data, cls._stock_data, cls._market_by_id, cls._stock_by_id)
-        with open(path, 'wb') as out:
+        data = (cls._market_data, cls._market_by_id, cls._stock_by_id)
+        with gzip.open(path, 'wb') as out:
             pickle.dump(data, out)
 
     @classmethod
     def load(cls, path=None):
         if not os.path.exists(path):
             return
-        with open(path, 'rb') as data:
-            cls._market_data, cls._stock_data, cls._market_by_id, cls._stock_by_id = pickle.load(data)
+        with gzip.open(path, 'rb') as data:
+            cls._market_data, cls._market_by_id, cls._stock_by_id = pickle.load(data)
 
     def get_market_data(self, market_name=None, startdate=None, enddate=None, force=False):
         self.__init_market_data(market_name, force)
@@ -149,7 +196,7 @@ class LearningData(object):
         else:
             return df.copy(False)
 
-    def get_stock_data(self, stock_name=None, startdate=None, enddate=None, force=False):
+    def get_stock_data(self, stock_name, startdate=None, enddate=None, force=False):
         self.__init_stock_data(stock_name, force)
         if not stock_name:
             return LearningData._stock_data[self.database]
@@ -203,10 +250,13 @@ class LearningData(object):
         stock_drop_columns = [c for c in df.columns if c in bad_stock_fields]
         market_drop_columns = [c for c in df.columns if c in bad_market_fields]
         # drops all columns which shouldn't be here (all the names gathered)
-        df.drop(stock_drop_columns + market_drop_columns, axis=1, inplace=True)
+        return df.drop(stock_drop_columns + market_drop_columns, axis=1)
 
     def get_market_names(self):
         return self.markets.distinct('market_name')
+
+    def get_stock_names(self):
+        return self.stocks.distinct('ticker')
 
     def _history_field_names(self):
         # TODO: less hacky range

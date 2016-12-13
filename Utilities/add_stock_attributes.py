@@ -19,8 +19,9 @@ def main():
 
     learning_data = LearningData()
     market_data = learning_data.get_market_data()
-    stock_data = learning_data.get_stock_data()
-    for stock_name, data in stock_data.items():
+
+    for stock_name in learning_data.get_stock_names():
+        data = learning_data.get_stock_data(stock_name)
         stock_prev = []
         market_prev = {market_name: [] for market_name in market_names}
         for date, row in data.iterrows():
@@ -34,15 +35,18 @@ def main():
                     if len(m_prev) < j + 1:
                         continue
                     update[Utilities.market_history_field(j, market_name)] = m_prev[j]
-
-            cl.update_one(filter={'_id': row['_id']}, update={'$set': update})
+            if update:
+                cl.update_one(filter={'_id': row['_id']}, update={'$set': update})
             stock_prev.insert(0, row['_id'])
             if len(stock_prev) > args.daymemory:
                 stock_prev.pop()
             for market_name in market_names:
-                market_prev[market_name].insert(0, market_data[market_name].get_value(row.name, '_id'))
-                if len(market_prev[market_name]) > args.daymemory:
-                    market_prev[market_name].pop()
+                m_prev = market_prev[market_name]
+                val = Utilities.dataframe_safe_get_value(market_data[market_name], row.name, '_id')
+                if val:
+                    m_prev.insert(0, val)
+                if len(m_prev) > args.daymemory:
+                    m_prev.pop()
 
 
 if __name__ == '__main__':
