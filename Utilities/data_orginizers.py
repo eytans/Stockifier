@@ -162,6 +162,14 @@ class LearningData(object):
                     frames = pd.concat([cleaned, frames])
             self._stock_by_id = frames.set_index('_id')
 
+    def get_future_change_classification(self, data, stock_name, days_forward):
+        full_data = self.get_stock_data(stock_name)
+        start = data.iloc[days_forward]
+        data_start_index = full_data.index.get_loc(start.name)
+        data_end_index = data_start_index + data.shape[0]
+        result_data = full_data.iloc[data_start_index:data_end_index]['change']
+        return result_data
+
     @classmethod
     def save(cls, path=None):
         if not path:
@@ -202,7 +210,6 @@ class LearningData(object):
             return LearningData._stock_data[self.database]
         else:
             return self.slice_by_date(LearningData._stock_data[self.database][stock_name], startdate, enddate)
-
 
     def flat_pointers(self, df, stock_range, market_range=None, legal_markets=None):
         if not market_range:
