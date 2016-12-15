@@ -10,32 +10,6 @@ from pathos import multiprocessing
 from collections.abc import Mapping
 
 
-class DictionarySorter(object):
-    '''Using a sample dictionary create a fast mapping from key to index.
-    API include way to get a key for a given index and to create a list from a different dictionary with same keys.
-    '''
-
-    def __init__(self, sample):
-        keys = list(sample.keys())
-        keys.sort()
-        self.sorting_dict = {key: i for i, key in enumerate(keys)}
-
-    def __call__(self, d, *args, **kwargs):
-        vals = [0] * len(self.sorting_dict)
-        for k in d.keys():
-            vals[self.sorting_dict[k]] = d[k]
-        return vals
-
-    def sort(self, d):
-        return self(d)
-
-    def get_index(self, key):
-        return self[key]
-
-    def __getitem__(self, item):
-        return self.sorting_dict[item]
-
-
 class LearningData(object):
     # TODO: only supports one database for now!!! this needs to change for tests.
     class DataAccessor(Mapping):
