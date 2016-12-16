@@ -174,22 +174,38 @@ class LearningData(object):
         else:
             return self.slice_by_date(LearningData._stock_data[self.database][stock_name], startdate, enddate)
 
-    def flat_pointers(self, data, stock_name, stock_range, market_range=None, legal_markets=None):
+    def add_history_fields(self, data, stock_name, stock_range, market_range=None, legal_markets=None):
         if not market_range:
             market_range = stock_range
         if not legal_markets:
             legal_markets = self.get_market_names()
 
+        res_data = data.copy(False)
+
+        # TODO: take care of range sliding out of data
+
         full_data = self.get_stock_data(stock_name)
         for i in range(1, 1 + stock_range):
             end = data.iloc[-i]
-            data_end_index = full_data.index.get_loc(end.name)
-            data_start_index = data_end_index - data.shape[0]
-            history_data = full_data.iloc[data_start_index:data_end_index]
-            # TODO: rename columns and add to a result df
+            history_end_index = full_data.index.get_loc(end.name)
+            history_start_index = history_end_index - data.shape[0]
+            history_data = full_data.iloc[history_start_index:history_end_index]
 
-        # TODO: same like the above also for markets
-        return result_data
+            for c in history_data.columns:
+                res_data[Utilities.stock_history_field(i, c)] = history_data[c]
+
+        for i in range(1, 1 + market_range):
+            end = data.iloc[-i]
+            for m in legal_markets:
+                history_data = self.get_market_data(m)
+                history_end_index = history_data.index.get_loc(end.name)
+                history_start_index = history_end_index - data.shape[0]
+                history_data = history_data.iloc[history_start_index:history_end_index]
+
+                for c in history_data.columns:
+                    res_data[Utilities.market_history_field(i, m, c)] = history_data[c]
+
+        return res_data
 
     def drop_history_fields(self, df, stock_history_range=None, market_history_range=None):
         all_market_history_fields, all_stock_history_fields = self._history_field_names()
