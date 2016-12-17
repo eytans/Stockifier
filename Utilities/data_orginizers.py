@@ -181,10 +181,11 @@ class LearningData(object):
             legal_markets = self.get_market_names()
 
         res_data = data.copy(False)
-
-        # TODO: take care of range sliding out of data
-
         full_data = self.get_stock_data(stock_name)
+
+        if full_data.shape[0] < res_data.shape[0] + stock_range:
+            res_data = res_data.iloc[res_data.shape[0] + stock_range - full_data.shape[0]:]
+
         for i in range(1, 1 + stock_range):
             end = data.iloc[-i]
             history_end_index = full_data.index.get_loc(end.name)
