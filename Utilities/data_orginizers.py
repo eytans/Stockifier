@@ -196,7 +196,7 @@ class LearningData(object):
         else:
             return df.copy(False)
 
-    def get_stock_data(self, stock_name, startdate=None, enddate=None, force=False):
+    def get_stock_data(self, stock_name=None, startdate=None, enddate=None, force=False):
         self.__init_stock_data(stock_name, force)
         if not stock_name:
             return LearningData._stock_data[self.database]
