@@ -10,32 +10,6 @@ from pathos import multiprocessing
 from collections.abc import Mapping
 
 
-class DictionarySorter(object):
-    '''Using a sample dictionary create a fast mapping from key to index.
-    API include way to get a key for a given index and to create a list from a different dictionary with same keys.
-    '''
-
-    def __init__(self, sample):
-        keys = list(sample.keys())
-        keys.sort()
-        self.sorting_dict = {key: i for i, key in enumerate(keys)}
-
-    def __call__(self, d, *args, **kwargs):
-        vals = [0] * len(self.sorting_dict)
-        for k in d.keys():
-            vals[self.sorting_dict[k]] = d[k]
-        return vals
-
-    def sort(self, d):
-        return self(d)
-
-    def get_index(self, key):
-        return self[key]
-
-    def __getitem__(self, item):
-        return self.sorting_dict[item]
-
-
 class LearningData(object):
     # TODO: only supports one database for now!!! this needs to change for tests.
     class DataAccessor(Mapping):
@@ -48,7 +22,7 @@ class LearningData(object):
                 os.makedirs(self.dir_path)
             if name not in LearningData.DataAccessor.Names:
                 raise RuntimeError("bad name for data accessor")
-            self.name = name
+            self.name = str(name)
 
         def __get_file_name(self, item):
             return os.path.join(self.dir_path, '{}_{}.p.gz'.format(self.name, item))
@@ -84,7 +58,6 @@ class LearningData(object):
     # save data as database to names to pandas.DataFrames
     _market_data = {}
     _stock_data = {}
-    _stock_by_id = None
     _market_by_id = None
 
     def __init__(self, database='exchange', legal_markets=None):
@@ -151,22 +124,20 @@ class LearningData(object):
             self._market_by_id = pd.concat(frames)
             self._market_by_id = self._market_by_id.set_index('_id')
             self._market_by_id = self.drop_history_fields(self._market_by_id)
-        if self._stock_by_id is None or force:
-            self.__init_stock_data(force=force)
-            frames = None
-            for key, df in self._stock_data[self.database]:
-                cleaned = self.drop_history_fields(df)
-                if not frames:
-                    frames = cleaned
-                else:
-                    frames = pd.concat([cleaned, frames])
-            self._stock_by_id = frames.set_index('_id')
+
+    def get_future_change_classification(self, data, stock_name, days_forward):
+        full_data = self.get_stock_data(stock_name)
+        start = data.iloc[days_forward]
+        data_start_index = full_data.index.get_loc(start.name)
+        data_end_index = data_start_index + data.shape[0]
+        result_data = full_data.iloc[data_start_index:data_end_index]['change']
+        return result_data
 
     @classmethod
     def save(cls, path=None):
         if not path:
             path = Utilities.default_pickle
-        data = (cls._market_data, cls._market_by_id, cls._stock_by_id)
+        data = (cls._market_data, cls._market_by_id)
         with gzip.open(path, 'wb') as out:
             pickle.dump(data, out)
 
@@ -175,7 +146,7 @@ class LearningData(object):
         if not os.path.exists(path):
             return
         with gzip.open(path, 'rb') as data:
-            cls._market_data, cls._market_by_id, cls._stock_by_id = pickle.load(data)
+            cls._market_data, cls._market_by_id = pickle.load(data)
 
     def get_market_data(self, market_name=None, startdate=None, enddate=None, force=False):
         self.__init_market_data(market_name, force)
@@ -203,36 +174,39 @@ class LearningData(object):
         else:
             return self.slice_by_date(LearningData._stock_data[self.database][stock_name], startdate, enddate)
 
-
-    def flat_pointers(self, df, stock_range, market_range=None, legal_markets=None):
+    def add_history_fields(self, data, stock_name, stock_range, market_range=None, legal_markets=None):
         if not market_range:
             market_range = stock_range
-        market_history_fields, stock_history_fields = self._history_field_names()
-        self.drop_history_fields(df, stock_range, market_range)
-        # now for all fields that weren't dropped start creating a ton of features
+        if not legal_markets:
+            legal_markets = self.get_market_names()
 
-        self.__init_by_id_data()
+        res_data = data.copy(False)
+        full_data = self.get_stock_data(stock_name)
 
-        # TODO: add columns for flattened attributes
-        stock_columns = [c for c in df.columns if c in stock_history_fields]
-        joined = df.join([self._stock_by_id]*len(stock_columns), on=stock_columns)
+        if full_data.shape[0] < res_data.shape[0] + stock_range:
+            res_data = res_data.iloc[res_data.shape[0] + stock_range - full_data.shape[0]:]
 
-        market_columns = [c for c in df.columns if c in market_history_fields]
-        joined = joined.join([self._market_by_id] * len(market_columns), on=market_columns)
+        for i in range(1, 1 + stock_range):
+            end = data.iloc[-i]
+            history_end_index = full_data.index.get_loc(end.name)
+            history_start_index = history_end_index - data.shape[0]
+            history_data = full_data.iloc[history_start_index:history_end_index]
 
+            for c in history_data.columns:
+                res_data[Utilities.stock_history_field(i, c)] = history_data[c]
 
-        # # TODO: iter rows to fill data
-        # for c in df.columns:
-        #     if c in stock_history_fields:
-        #         # TODO: move all attributes to relevant cols
-        #
-        #         pass
-        #     elif c in market_history_fields:
-        #         # TODO: move all attributes to relevant cols if in legal markets
-        #         pass
-        #
-        # # TODO: drop all pointers when done with object ids
-        return joined
+        for i in range(1, 1 + market_range):
+            end = data.iloc[-i]
+            for m in legal_markets:
+                history_data = self.get_market_data(m)
+                history_end_index = history_data.index.get_loc(end.name)
+                history_start_index = history_end_index - data.shape[0]
+                history_data = history_data.iloc[history_start_index:history_end_index]
+
+                for c in history_data.columns:
+                    res_data[Utilities.market_history_field(i, m, c)] = history_data[c]
+
+        return res_data
 
     def drop_history_fields(self, df, stock_history_range=None, market_history_range=None):
         all_market_history_fields, all_stock_history_fields = self._history_field_names()
