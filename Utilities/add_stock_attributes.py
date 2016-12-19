@@ -1,7 +1,7 @@
 import pymongo
 import argparse
 import Utilities
-from Utilities.data_orginizers import LearningData
+from Utilities.orginizers import LearningData
 
 
 def main():

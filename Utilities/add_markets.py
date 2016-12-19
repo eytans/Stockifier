@@ -2,7 +2,7 @@ import pymongo
 import argparse
 import pandas as pd
 import numpy as np
-from Utilities.data_orginizers import LearningData
+from Utilities.orginizers import LearningData
 
 
 def main():

@@ -1,6 +1,7 @@
 import pymongo
 import argparse
 import multiprocessing
+from Utilities.orginizers import LearningData
 from functools import partial
 
 
@@ -66,28 +67,13 @@ class DateManipulator(object):
     #     return success_count/data_length
 
 
-market_list = ['Accident & Health Insurance (Financial)','Chemicals - Major Diversified (Basic Materials)',
-               'Diagnostic Substances (Healthcare)','Drug Delivery (Healthcare)','Drug Manufacturers - Other (Healthcare)',
-               'Drug Related Products (Healthcare)','Drug Stores (Services)',
-               'Drugs Wholesale (Services)','Health Care Plans (Healthcare)',
-               'Hospitals (Healthcare)','Long-Term Care Facilities (Healthcare)','Medical Equipment Wholesale (Services)',
-               'Medical Instruments & Supplies (Healthcare)','Medical Laboratories & Research (Healthcare)',
-               'Specialized Health Services (Healthcare)','Specialty Chemicals (Basic Materials)',
-               'Synthetics (Basic Materials)']
-# print(self.find_shared_max_interval(path1,path2))
-# start,finish = maximal_shared_range_dir(path3)
-# print(get_relevant_data(start, finish, path3))
-# print(find_maximal_for_stock_and_market(path4,path3))
-
-# TODO problem with drug manufactor major & drugs generics & Medical Appliances & Equipment (Healthcare)
+market_list = LearningData().get_market_names()
 
 market_data = {}
 stock_data = {}
 
 
-# stock_path= sys.argv[1]
-# market_path = sys.argv[2]
-def work_on_it(stock_data, market_data, db_name,db):
+def work_on_it(stock_data, market_data, db_name, db):
     relations = DateManipulator().find_abs_relation(stock_data, market_data)
     cl = db['metadata']
     cl.update_one(filter={'ticker': stock_data[0]['ticker']}, update={'$set': {'relations': relations}}, upsert=True)

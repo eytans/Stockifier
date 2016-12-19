@@ -1,5 +1,5 @@
 import sklearn.ensemble
-from Utilities.data_orginizers import *
+from Utilities.orginizers import *
 
 
 def get_general_classifier(data, classes):
