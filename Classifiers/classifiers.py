@@ -62,19 +62,24 @@ class QuarterDistance(object):
         :return: distance as measured by a few norms: float
         """
 
-        us = self.ready_quarter_data(u)
-        vs = self.ready_quarter_data(v)
+        u = self.ready_quarter_data(u)
+        v = self.ready_quarter_data(v)
 
-        # For now just l2 distance. later do more
-        return self.l2_norm(u, v)
+        total = sum(map(lambda c: self.l2_norm(u[c], v[c]), u.columns))
+        total += sum(map(lambda c: self.lmax_norm(u[c], v[c]), u.columns))
+
+        return total
 
     def l2_norm(self, u, v):
-        total_d = defaultdict(lambda: 0.0)
-        # using map to open iterrows format (tuple where 0: index, 1: row)
-        for u, v in map(lambda tup: (tup[0][1], tup[1][1]), zip(u.iterrows(), v.iterrows())):
-            for i, (uval, vval) in enumerate(zip(u, v)):
-                total_d[i] += (uval - vval) ** 2
-        return sqrt(sum(total_d.values()))
+        total_d = 0.0
+        for uval, vval in zip(u, v):
+            total_d += (uval - vval) ** 2
+        return sqrt(total_d)
+
+    def lmax_norm(self, u, v):
+        new = (u-v).apply(lambda x: fabs(x))
+        res = new.max()
+        return res
 
     def ready_quarter_data(self, u):
         u = self.interpolate_extra_points(u)
