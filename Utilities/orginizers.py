@@ -238,5 +238,3 @@ class LearningData(object):
         market_names = self.get_market_names()
         market_history_fields = [Utilities.market_history_field(i, m) for i in range(0, 10000) for m in market_names]
         return market_history_fields, stock_history_fields
-
-

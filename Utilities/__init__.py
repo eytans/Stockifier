@@ -33,3 +33,15 @@ def dataframe_safe_get_value(df, row_name, col):
         return df.get_value(row_name, col)
     except:
         return None
+
+
+def iterate_couples(it):
+    prev = None
+    first = True
+    for i in it:
+        if first:
+            prev = i
+            first = False
+            continue
+        yield prev, i
+        prev = i
