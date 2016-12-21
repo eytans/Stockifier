@@ -27,7 +27,10 @@ def create_quarter_clusterer(ld: LearningData):
         full_data.extend(list(Quarter.split_by_quarters(s_name, d)))
     distance_object = QuarterDistance(4)
     clusterer = KMeansClusterer(num_means=8, distance=distance_object.dist, repeats=25)
-    return clusterer
+    results = clusterer.cluster(vectors=full_data)
+    for i, q in enumerate(full_data):
+        q.cluster = results[i]
+    return clusterer, full_data
 
 
 # def split_quarters_by_cluster(df):
@@ -41,13 +44,11 @@ class Quarter(object):
         drop_cols = list(data.columns)
         for c in cols:
             drop_cols.remove(c)
-        self.data = data.drop(drop_cols)
-        try:
-            self.start = self.data.iloc[0]
-        except:
-            pass
+        self.data = data.drop(drop_cols, axis=1)
+        self.start = self.data.iloc[0]
         self.end = self.data.iloc[-1]
         self.ready = False
+        self.cluster = None
 
     def ready_quarter_data(self, minutes):
         if self.ready:
