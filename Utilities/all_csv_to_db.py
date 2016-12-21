@@ -44,8 +44,8 @@ def main():
                         pass
 
                     doc['date'] = datetime.datetime.strptime(doc['date'], '%Y-%m-%d')
-
-                    cl.insert_one(doc)
+                    if not isinstance(doc['open'], str):
+                        cl.insert_one(doc)
 
     for d in filter(os.path.isdir, map(lambda sd: os.path.join(args.dir, sd), os.listdir(args.dir))):
         market_name = os.path.basename(d)

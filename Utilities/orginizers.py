@@ -100,7 +100,13 @@ class LearningData(object):
                 first = pd.DataFrame(list(ld.stocks.find(query)))
                 query['date'] = {'$gte': middle}
                 second = pd.DataFrame(list(ld.stocks.find(query)))
-                data[name] = pd.concat([first, second]).set_index(['date'])
+                # drop duplicates
+                with_dups = pd.concat([first, second]).set_index(['date'])
+                without_dups = with_dups[~with_dups.index.duplicated()]
+                # also drop fields where open is not a number (god knows why we have such entries)
+                without_empty_open = without_dups[without_dups.apply(lambda row: not isinstance(row['open'], str),
+                                                                     axis=1)]
+                data[name] = without_empty_open
         else:
             names = filter(lambda name: name not in data or force, list(self.stocks.distinct('ticker')))
             for name in names:
