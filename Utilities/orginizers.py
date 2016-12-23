@@ -15,6 +15,7 @@ class LearningData(object):
     class DataAccessor(Mapping):
         class Names(enum.Enum):
             stock = 1
+            quarter = 2
 
         def __init__(self, name):
             self.dir_path = os.path.join(Utilities.project_dir, 'cache')

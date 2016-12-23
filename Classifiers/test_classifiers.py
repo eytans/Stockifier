@@ -7,5 +7,5 @@ import logging
 class TestCreate_quarter_clusterer(TestCase):
     def test_create_quarter_clusterer(self):
         logging.getLogger().setLevel(logging.DEBUG)
-        clusterer = create_quarter_clusterer(LearningData())
+        clusterer = create_quarter_clusterer(LearningData(), ['AMRS', 'ALOG', 'AMT', 'BXP', 'CHH'])
         self.assertIsNotNone(clusterer)

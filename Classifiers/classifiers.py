@@ -1,5 +1,6 @@
 import sklearn.ensemble
 from nltk.cluster.kmeans import KMeansClusterer
+import sklearn.cluster
 from Utilities.orginizers import *
 import Utilities
 from math import *
@@ -16,21 +17,40 @@ def apply_func(func, iterable):
         yield i
 
 
-def create_quarter_clusterer(ld: LearningData):
-    stock_names = ld.get_stock_names()
+def create_quarter_clusterer(ld: LearningData, stock_names=None):
+    if not stock_names:
+        stock_names = ld.get_stock_names()
+    quarters = LearningData.DataAccessor(LearningData.DataAccessor.Names.quarter)
     drop_cols = list(ld.get_stock_data(stock_names[0]).columns)
     drop_cols.remove('open')
     drop_cols.remove('volume')
     stocks_data = [(s, ld.get_stock_data(s).drop(drop_cols, axis=1)) for s in stock_names]
     full_data = []
     for s_name, d in stocks_data:
-        full_data.extend(list(Quarter.split_by_quarters(s_name, d)))
+        if s_name not in quarters:
+            quarters[s_name] = list(Quarter.split_by_quarters(s_name, d))
+        full_data.extend(quarters[s_name])
+
     distance_object = QuarterDistance(4)
-    clusterer = KMeansClusterer(num_means=8, distance=distance_object.dist, repeats=25)
-    results = clusterer.cluster(vectors=full_data)
-    for i, q in enumerate(full_data):
-        q.cluster = results[i]
-    return clusterer, full_data
+    for q in full_data:
+        q.ready_quarter_data(distance_object.minutes)
+
+    shortest = min(map(lambda q: q.data.shape[0], full_data))
+    def arrange_data_frame(data: pd.DataFrame, len: int):
+        res = None
+        data = data.iloc[0:len]
+        for c in data.columns:
+            if res is None:
+                res = data[c]
+                continue
+            res = res.append(data[c])
+        return res
+
+    full_data = [arrange_data_frame(q.data, shortest) for q in full_data]
+    # clusterer = KMeansClusterer(num_means=6, distance=distance_object.dist, repeats=25, avoid_empty_clusters=True)
+    # results = clusterer.cluster(vectors=full_data)
+    clusterer = sklearn.cluster.KMeans().fit(full_data)
+    return clusterer
 
 
 # def split_quarters_by_cluster(df):
@@ -39,14 +59,17 @@ def create_quarter_clusterer(ld: LearningData):
 #     dfs = df.groupby('quarters')
 
 class Quarter(object):
-    def __init__(self, stock_name: str, data: pd.DataFrame, cols=('open', 'volume')):
-        self.name = stock_name
+    def __init__(self, data: pd.DataFrame, cols=('open', 'volume'), name=''):
+        self.reset(data, cols)
+
+    def reset(self, data, cols=('open', 'volume'), name=''):
         drop_cols = list(data.columns)
         for c in cols:
             drop_cols.remove(c)
+        self.name = name
         self.data = data.drop(drop_cols, axis=1)
-        self.start = self.data.iloc[0]
-        self.end = self.data.iloc[-1]
+        self.start = self.data.iloc[0].name
+        self.end = self.data.iloc[-1].name
         self.ready = False
         self.cluster = None
 
@@ -54,8 +77,6 @@ class Quarter(object):
         if self.ready:
             return
         u = self.interpolate_extra_points(minutes)
-        col_to_data = {col: u[col].values for col in u.columns}
-        u = pd.DataFrame(col_to_data, index=range(u.shape[0]))
         for c in u.columns:
             # times 1000 will later make the numerical error smaller (as now its with 0 error) but will not hurt
             # the distance outcome as it is proportional to the rest of the distances calculations. (because we are in
@@ -70,6 +91,42 @@ class Quarter(object):
         res = self.data.reindex(indexes).interpolate(method='spline', order=3, s=0.)
         return res
 
+    def __add__(self, other):
+        # this is hacky and touching internals because its a project.
+        # bad things: touch ready drop na setting index and moving dates
+        if not self.ready:
+            self.ready_quarter_data(24 * 60)
+
+        if not other.ready:
+            other.ready_quarter_data(24 * 60)
+
+        mine_reindexed = self.data.set_index([list(range(self.data.shape[0]))]).fillna(0)
+        other_reindexed = other.data.set_index([list(range(other.data.shape[0]))]).fillna(0)
+        combined = (mine_reindexed + other_reindexed).fillna(0)
+
+        index = self.data.index
+        if combined.shape[0] > mine_reindexed.shape[0]:
+            index = other.data.index
+        res = Quarter(combined.set_index([index]))
+        return res
+
+    def __sub__(self, other):
+        other_data = other.data * -1
+        return self + Quarter(other_data)
+
+    def __iadd__(self, other):
+        res = (self+other).data
+        self.reset(res, name=self.name)
+        return self
+
+    def __isub__(self, other):
+        res = (self - other).data
+        self.reset(res, name=self.name)
+        return self
+
+    def __truediv__(self, other):
+        return self
+
     @staticmethod
     def split_by_quarters(stock_name: str, data: pd.DataFrame):
         # BQ is buisness quarter
@@ -79,7 +136,7 @@ class Quarter(object):
             temp = data[start:end]
             if start in temp.index and end in temp.index:
                 del temp
-                yield Quarter(stock_name, data[start:end])
+                yield Quarter(data[start:end], name=stock_name)
         logging.debug("done {}".format(stock_name))
 
 
