@@ -10,64 +10,70 @@ from pathos import multiprocessing
 from collections.abc import Mapping
 
 
+# TODO: only supports one database for now!!! this needs to change for tests.
+class DataAccessor(Mapping):
+    class Names(enum.Enum):
+        stock = 1
+        quarter = 2
+
+    def __init__(self, name):
+        self.dir_path = os.path.join(Utilities.project_dir, 'cache')
+        if not os.path.isdir(self.dir_path):
+            os.makedirs(self.dir_path)
+        if name not in DataAccessor.Names:
+            raise RuntimeError("bad name for data accessor")
+        self.name = str(name)
+
+    def __get_file_name(self, item):
+        return os.path.join(self.dir_path, '{}_{}.p.gz'.format(self.name, item))
+
+    def __contains__(self, item):
+        return os.path.exists(self.__get_file_name(item))
+
+    def __getitem__(self, item):
+        if not self.__contains__(item):
+            raise KeyError(item)
+        fn = self.__get_file_name(item)
+        with gzip.open(fn, 'rb') as data:
+            return pickle.load(data)
+
+    def __setitem__(self, key, value):
+        fn = self.__get_file_name(key)
+        with gzip.open(fn, 'wb') as out:
+            pickle.dump(value, out)
+
+    def __iteration_helper(self):
+        for f in os.listdir(self.dir_path):
+            if f.startswith(self.name):
+                item = f.split('_')[1].split('.')[0]
+                yield item
+
+    def __iter__(self):
+        for item in self.__iteration_helper():
+            yield item, self[item]
+
+    def __len__(self):
+        return len(list(self.__iteration_helper()))
+
+
 class LearningData(object):
-    # TODO: only supports one database for now!!! this needs to change for tests.
-    class DataAccessor(Mapping):
-        class Names(enum.Enum):
-            stock = 1
-            quarter = 2
-
-        def __init__(self, name):
-            self.dir_path = os.path.join(Utilities.project_dir, 'cache')
-            if not os.path.isdir(self.dir_path):
-                os.makedirs(self.dir_path)
-            if name not in LearningData.DataAccessor.Names:
-                raise RuntimeError("bad name for data accessor")
-            self.name = str(name)
-
-        def __get_file_name(self, item):
-            return os.path.join(self.dir_path, '{}_{}.p.gz'.format(self.name, item))
-
-        def __contains__(self, item):
-            return os.path.exists(self.__get_file_name(item))
-
-        def __getitem__(self, item):
-            if not self.__contains__(item):
-                raise KeyError(item)
-            fn = self.__get_file_name(item)
-            with gzip.open(fn, 'rb') as data:
-                return pickle.load(data)
-
-        def __setitem__(self, key, value):
-            fn = self.__get_file_name(key)
-            with gzip.open(fn, 'wb') as out:
-                pickle.dump(value, out)
-
-        def __iteration_helper(self):
-            for f in os.listdir(self.dir_path):
-                if f.startswith(self.name):
-                    item = f.split('_')[1].split('.')[0]
-                    yield item
-
-        def __iter__(self):
-            for item in self.__iteration_helper():
-                yield item, self[item]
-
-        def __len__(self):
-            return len(list(self.__iteration_helper()))
-
     # save data as database to names to pandas.DataFrames
     _market_data = {}
     _stock_data = {}
     _market_by_id = None
 
-    def __init__(self, database='exchange', legal_markets=None):
+    def __init__(self, database='exchange', legal_markets=None,
+                 cols_to_drop=('_id', 'adj_low', 'adj_close', 'adj_open', 'adj_volume', 'adj_high', 'market_name',
+                               'ticker'),
+                 market_cols_drop=('market_name', '_id')):
         self.client = pymongo.MongoClient()
         db = self.client[database]
         self.database = database
         self.markets = db['markets']
         self.stocks = db['stocks']
         self.legal_markets = legal_markets
+        self.cols_to_drop = list(cols_to_drop)
+        self.cols_to_drop_markets = list(market_cols_drop)
         if self.legal_markets is None:
             self.legal_markets = self.get_market_names()
 
@@ -88,7 +94,7 @@ class LearningData(object):
 
     def __init_stock_data(self, stock_name=None, force=False):
         if self.database not in LearningData._stock_data:
-            self._stock_data[self.database] = self.DataAccessor(self.DataAccessor.Names.stock)
+            self._stock_data[self.database] = DataAccessor(DataAccessor.Names.stock)
         data = self._stock_data[self.database]
         # TODO: non hacky version of date splitting preffered (so we wont timeout in mongo)
         middle = datetime.datetime(2005, 1, 1)
@@ -137,6 +143,8 @@ class LearningData(object):
         start = data.iloc[days_forward]
         data_start_index = full_data.index.get_loc(start.name)
         data_end_index = data_start_index + data.shape[0]
+        if data_end_index > full_data.shape[0]:
+            raise RuntimeError("cant get forward classification as not data forward")
         result_data = full_data.iloc[data_start_index:data_end_index]['change']
         return result_data
 
@@ -158,9 +166,10 @@ class LearningData(object):
     def get_market_data(self, market_name=None, startdate=None, enddate=None, force=False):
         self.__init_market_data(market_name, force)
         if not market_name:
-            return LearningData._market_data[self.database]
+            return {key: val.drop(self.cols_to_drop_markets, axis=1) for key, val in
+                    LearningData._market_data[self.database].items}
         else:
-            df = LearningData._market_data[self.database][market_name]
+            df = LearningData._market_data[self.database][market_name].drop(self.cols_to_drop_markets, axis=1)
         return self.slice_by_date(df, startdate, enddate)
 
     @staticmethod
@@ -174,30 +183,37 @@ class LearningData(object):
         else:
             return df.copy(False)
 
-    def get_stock_data(self, stock_name=None, startdate=None, enddate=None, force=False):
+    def get_stock_data(self, stock_name, startdate=None, enddate=None, force=False):
         self.__init_stock_data(stock_name, force)
-        if not stock_name:
-            return LearningData._stock_data[self.database]
-        else:
-            return self.slice_by_date(LearningData._stock_data[self.database][stock_name], startdate, enddate)
+        temp = self.slice_by_date(self._stock_data[self.database][stock_name], startdate, enddate)
+        return temp.drop(list(self.cols_to_drop), axis=1)
 
     def add_history_fields(self, data, stock_name, stock_range, market_range=None, legal_markets=None):
         if not market_range:
             market_range = stock_range
         if not legal_markets:
-            legal_markets = self.get_market_names()
+            if self.legal_markets:
+                legal_markets = self.legal_markets
+            else:
+                legal_markets = self.get_market_names()
 
         res_data = data.copy(False)
         full_data = self.get_stock_data(stock_name)
 
         if full_data.shape[0] < res_data.shape[0] + stock_range:
             res_data = res_data.iloc[res_data.shape[0] + stock_range - full_data.shape[0]:]
+        for i in range(stock_range):
+            if res_data.iloc[i].name == full_data.iloc[0].name:
+                res_data = res_data.iloc[stock_range - i:]
+
+        res_data.set_index([list(range(res_data.shape[0]))])
 
         for i in range(1, 1 + stock_range):
-            end = data.iloc[-i]
+            end = res_data.iloc[-i]
             history_end_index = full_data.index.get_loc(end.name)
-            history_start_index = history_end_index - data.shape[0]
+            history_start_index = history_end_index - res_data.shape[0]
             history_data = full_data.iloc[history_start_index:history_end_index]
+            history_data.set_index([list(range(history_data.shape[0]))])
 
             for c in history_data.columns:
                 res_data[Utilities.stock_history_field(i, c)] = history_data[c]
@@ -205,13 +221,17 @@ class LearningData(object):
         for i in range(1, 1 + market_range):
             end = data.iloc[-i]
             for m in legal_markets:
-                history_data = self.get_market_data(m)
-                history_end_index = history_data.index.get_loc(end.name)
-                history_start_index = history_end_index - data.shape[0]
-                history_data = history_data.iloc[history_start_index:history_end_index]
+                try:
+                    history_data = self.get_market_data(m)
+                    history_end_index = history_data.index.get_loc(end.name)
+                    history_start_index = history_end_index - data.shape[0]
+                    history_data = history_data.iloc[history_start_index:history_end_index]
+                    history_data.set_index([list(range(history_data.shape[0]))])
 
-                for c in history_data.columns:
-                    res_data[Utilities.market_history_field(i, m, c)] = history_data[c]
+                    for c in history_data.columns:
+                        res_data[Utilities.market_history_field(i, m, c)] = history_data[c]
+                except:
+                    continue
 
         return res_data
 

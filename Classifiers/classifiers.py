@@ -7,20 +7,29 @@ from math import *
 import logging
 
 
-def get_general_classifier(data, classes):
-    return sklearn.ensemble.AdaBoostClassifier().fit(data, classes)
-
-
 def apply_func(func, iterable):
     for i in iterable:
         func(i)
         yield i
 
 
+def create_adaboost(stock_name, data=None, days_forward=1, return_data=False):
+    ld = LearningData()
+    if data is None:
+        data = ld.get_stock_data(stock_name)
+        data = ld.add_history_fields(data, stock_name, 10)
+        data = data.dropna()
+    classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > 0)
+    res = sklearn.ensemble.AdaBoostClassifier(n_estimators=200).fit(data, classes)
+    if return_data:
+        res = (res, data, classes)
+    return res
+
+
 def create_quarter_clusterer(ld: LearningData, stock_names=None):
     if not stock_names:
         stock_names = ld.get_stock_names()
-    quarters = LearningData.DataAccessor(LearningData.DataAccessor.Names.quarter)
+    quarters = DataAccessor(DataAccessor.Names.quarter)
     drop_cols = list(ld.get_stock_data(stock_names[0]).columns)
     drop_cols.remove('open')
     drop_cols.remove('volume')
