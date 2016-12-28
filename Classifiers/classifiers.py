@@ -1,5 +1,5 @@
 import sklearn.ensemble
-from nltk.cluster.kmeans import KMeansClusterer
+from sklearn.tree import DecisionTreeClassifier
 import sklearn.cluster
 from Utilities.orginizers import *
 import Utilities
@@ -13,16 +13,24 @@ def apply_func(func, iterable):
         yield i
 
 
-def create_adaboost(stock_name, data=None, days_forward=1, return_data=False):
+def ready_training_data(stock_name, days_forward=1, change_threshold=0, startdate=None, enddate=None):
     ld = LearningData()
-    if data is None:
-        data = ld.get_stock_data(stock_name)
-        data = ld.add_history_fields(data, stock_name, 10)
-        data = data.dropna()
-    classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > 0)
-    res = sklearn.ensemble.AdaBoostClassifier(n_estimators=200).fit(data, classes)
-    if return_data:
-        res = (res, data, classes)
+    data = ld.get_stock_data(stock_name, startdate=startdate, enddate=enddate)
+    data = ld.add_history_fields(data, stock_name, 10)
+    length = len(data)
+    data = data.dropna()
+    if length - len(data) > 50:
+        logging.warning("dropped more then 50 samples containing not a number")
+    classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > change_threshold)
+    return data, classes
+
+
+def create_adaboost(stock_name=None, data=None, classes=None, days_forward=1, base_estimator=DecisionTreeClassifier):
+    if (data is None or classes is None) and stock_name is None:
+        raise ValueError("Need at least stock_name or data+classes")
+    if data is None or classes is None:
+        data, classes = ready_training_data(stock_name, days_forward=days_forward)
+    res = sklearn.ensemble.AdaBoostClassifier(base_estimator=base_estimator, n_estimators=200).fit(data, classes)
     return res
 
 
