@@ -20,12 +20,12 @@ def ready_training_data(stock_name, days_forward=1, change_threshold=0, startdat
     length = len(data)
     data = data.dropna()
     if length - len(data) > 50:
-        logging.warning("dropped more then 50 samples containing not a number")
+        logging.warning("dropped more then {} samples containing not a number".format(length - len(data)))
     classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > change_threshold)
     return data, classes
 
 
-def create_adaboost(stock_name=None, data=None, classes=None, days_forward=1, base_estimator=DecisionTreeClassifier):
+def create_adaboost(stock_name=None, data=None, classes=None, days_forward=1, base_estimator=DecisionTreeClassifier()):
     if (data is None or classes is None) and stock_name is None:
         raise ValueError("Need at least stock_name or data+classes")
     if data is None or classes is None:
@@ -53,6 +53,7 @@ def create_quarter_clusterer(ld: LearningData, stock_names=None):
         q.ready_quarter_data(distance_object.minutes)
 
     shortest = min(map(lambda q: q.data.shape[0], full_data))
+
     def arrange_data_frame(data: pd.DataFrame, len: int):
         res = None
         data = data.iloc[0:len]
