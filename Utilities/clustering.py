@@ -1,7 +1,6 @@
 import sklearn.cluster
-from Utilities.orginizers import LearningData
+from Utilities.orginizers import LearningData,DataAccessor
 import pandas as pd
-import itertools
 import numpy as np
 
 all_stocks_name = ['AFL', 'AIZ', 'CNO', 'EIG', 'GLRE', 'GTS', 'PRA', 'UNM', 'ACET', 'AI', 'APD', 'ARG', 'ASH', 'BAS',
@@ -78,75 +77,80 @@ market_stock_dic = {
                                                     'XRAY']}
 
 
-def find_smallest_common(self, s1, s2):
-    """
-    This function excepts two stocks and returns how up you need to go in the tree in order for the stocks to
-    be at the same cluster
-    :return:
-    """
+class StrengthCalc(object):
+    def __init__(self, start_date="1995-01-01", stock_list=None, freq="BQ", periods=(2016 - 1995) * 4 + 3):
+        self._accessor = DataAccessor(DataAccessor.Names.for_clustering)
+        self._ready = False
+        self.data = {}
+        self.__init_data()
+        self.start = start_date
+        self.ld = LearningData()
+        self.stocks = stock_list
+        if self.stocks is None:
+            self.stocks = self.ld.get_stock_names()
+        self.freq = freq
+        self.periods = periods
+        self.__init_data()
 
+    def __combined_stock_name(self, st):
+        return st + str(self.start) + str(self.freq) + str(self.periods)
 
-def get_data(start_date="1995-01-01", stock_list=None, freq="BQ", periods=(2016 - 1995) * 4 + 3):
-    """
-    :param start_date:
-    :param stock_list:
-    :param freq:
-    :param periods:
-    :return:
-    """
-    ld = LearningData()
-    if not stock_list:
-        stock_list = all_stocks_name
-    date_array = pd.bdate_range(start=start_date, periods=periods, freq=freq)
-    data = []
-    for st in stock_list:
-        current_stock_data = ld.get_stock_data(st)
-        # need to take in consideration case of "inf" in value
-        # gets the open and volume of the current df and calculate the percentage of change
-        value = current_stock_data.loc[date_array][['open', 'volume']]
-        # fill NaN with mean of the column
-        value = value.reset_index()
-        value.columns = ['time', 'open', 'volume']
-        value = value.drop_duplicates('time').set_index('time')
-        value = value.fillna(value.mean())
-        # volume at the before exist is 0
-        value = value.replace('inf', 0.0)
-        # need to take the two columns and create a feature row from it. (single row for cluster)
-        # we have 2 columns, open and volume and many dates.
-        data.append(value.values)
-    return np.vstack(np.dstack(data)).T
+    def __init_data(self):
+        date_array = pd.bdate_range(start=self.start, periods=self.periods, freq=self.freq)
+        data = []
+        for st in self.stocks:
+            if self.__combined_stock_name(st) not in self._accessor:
+                current_stock_data = self.ld.get_stock_data(st)
+                # need to take in consideration case of "inf" in value
+                # gets the open and volume of the current df and calculate the percentage of change
+                try:
+                    value = current_stock_data.loc[date_array][['open', 'volume']]
+                except:
+                    print(st)
+                    continue
 
+                # fill NaN with mean of the column
+                value = value.reset_index()
+                value.columns = ['time', 'open', 'volume']
+                value = value.drop_duplicates('time').set_index('time')
+                value = value.fillna(value.mean())
+                # volume at the before exist is 0
+                value = value.replace('inf', 0.0)
+                # need to take the two columns and create a feature row from it. (single row for cluster)
+                # we have 2 columns, open and volume and many dates.
+                self._accessor[self.__combined_stock_name(st)] = value
+            self.data[st] = self._accessor[self.__combined_stock_name(st)]
+        return np.vstack(np.dstack(data)).T
 
-def create_clustering_obj(n_clusters, data, stock_list):
-    clr = sklearn.cluster.KMeans(n_clusters=n_clusters)
-    clr.fit(data, stock_list)
-    return clr
+    def create_clustering_obj(self, n_clusters, data, stock_list):
+        clr = sklearn.cluster.KMeans(n_clusters=n_clusters)
+        clr.fit(data, stock_list)
+        return clr
 
+    def create_array_of_clusters(self,stock_list, start_date="2010-01-01", min_number=3, max_number=120, step=None):
+        data = self.__init_data(start_date=start_date, stock_list=stock_list)
+        arr_clr = []
+        for x in range(min_number, max_number + 1, step):
+            arr_clr.append(self.create_clustering_obj(n_clusters=x, data=data, stock_list=stock_list))
+        return arr_clr
 
-def create_array_of_clusters(stock_list, start_date=None, min_number=3, max_number=120, step=None):
-    data = get_data(start_date=start_date, stock_list=stock_list)
-    arr_clr = []
-    for x in range(min_number, max_number + 1, step=step):
-        arr_clr.append(create_clustering_obj(n_clusters=x, data=data, stock_list=stock_list))
-    return arr_clr
-
-
-def get_strength(stock, market, min_number, max_number, step):
-    market = market_stock_dic[market]
-    arr_clr = create_array_of_clusters(stock_list=all_stocks_name, step=20)
-    arr_clr = arr_clr.reverse()
-    stock_data = get_data(stock_list=stock)
-    market_data = get_data(stock_list=market)
-    strength = 1.0
-    for a in arr_clr:
-        count = 0
-        stock_label = a.predict(stock_data)
-        market_labels = a.predict(market_data)
-        for m in market_labels:
-            if stock_label == m:
-                count += 1
-        if count / market_labels > 0.75:
-            return strength
-        else:
-            strength -= (1 / len(arr_clr))
-    return strength
+    def get_strength(self, stock, market, min_number, max_number, step):
+        market = market_stock_dic[market]
+        arr_clr = self.create_array_of_clusters(stock_list=all_stocks_name, step=step)
+        arr_clr = arr_clr.reverse()
+        stock_data = self.__init_data(stock_list=stock, start_date="2010-01-01")
+        market_data = self.__init_data(stock_list=market, start_date="2010-01-01")
+        strength = 1.0
+        for a in arr_clr:
+            count = 0
+            stock_label = a.predict(stock_data)
+            market_labels = a.predict(market_data)
+            for m in market_labels:
+                if stock_label == m:
+                    count += 1
+            if count / market_labels > 0.75:
+                return strength
+            else:
+                strength -= (1 / len(arr_clr))
+        return strength
+print(get_strength(stock='NHC',market='Medical Laboratories & Research (Healthcare)',min_number=5,max_number=20,step=5))
