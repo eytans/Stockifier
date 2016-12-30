@@ -1,5 +1,6 @@
 from Classifiers import *
 from Utilities import *
+from sklearn.model_selection import cross_val_predict
 from unittest import TestCase
 
 
@@ -15,11 +16,13 @@ class TestConnectionStrengthClassifier(TestCase):
         self.cols = list(self.market_fields.values())
         self.cols = [c for c in self.cols if len(c) > 0]
 
+    def _fit(self):
+        return self.clf.fit(self.data, self.classes, self.cols, self.relations)
+
     def test_fit(self):
-        self.assertIsNotNone(self.clf.fit(self.data, self.classes, self.cols, self.relations))
+        self.assertIsNotNone(self._fit())
 
     def test_predict(self):
-        self.fail()
-
-    def test_predict_proba(self):
-        self.fail()
+        self.assertGreaterEqual(
+            sum(cross_val_predict(self.clf, self.data, self.classes, fit_params={'connection_columns': self.cols,
+                                  'strengths': self.relations}))/3, 0.75)

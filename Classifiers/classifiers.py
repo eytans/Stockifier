@@ -146,9 +146,9 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         :param combined_weight: the weight to put on the combined classifier.
         :param base_estimator: the estimator to use as a model for the fit.
         """
-        self.base_estimator = sklearn.base.clone(base_estimator)
+        self.base_estimator = base_estimator
         self.threshold = threshold
-        self.combined_weight=combined_weight
+        self.combined_weight = combined_weight
 
     def fit(self, X, y, connection_columns, strengths):
         """
@@ -167,10 +167,12 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         self.combined_estimators_ = []
         self.connections_estimators_ = []
         self.relations_ = []
+        self.cols_ = []
         for cols, stren in zip(connection_columns, strengths):
             if stren < self.threshold:
                 continue
             self.relations_.append(stren)
+            self.cols_.append(cols)
 
             new_con_est = sklearn.base.clone(self.base_estimator)
             self.connections_estimators_.append(new_con_est.fit(X[cols], y))
@@ -181,26 +183,28 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         self.classes_ = self.base_estimator_.classes_
         return self
 
-    def __predict_p(self, x):
-        results = []
-        for combined_e, connection_e in zip(self.combined_estimators_, self.connections_estimators_):
-            combined = combined_e.predict_prob(x)
-            connect = connection_e.predict_prob(x)
-            results.append([cb*self.combined_weight + (1-self.combined_weight)*cn for cb, cn in zip(combined, connect)])
-
-        total_strength = max(sum(self.relations_), 1)
-        base = [total_strength*p for p in self.base_estimator_.predict_proba(x)]
-        for rel, probs in zip(self.relations_, results):
-            base = [b + p*rel for b, p in zip(base, probs)]
-        return base
-
-    def __predict(self, x):
-        probs = self.__predict_p(x)
-        cls, p = max(zip(self.classes_, probs), key=lambda val: val[1])
-        return cls
+    def __predict_from_probs(self, probs):
+        bp = 0
+        bi = 0
+        for i, p in enumerate(probs):
+            if bp < p:
+                bp, bi = p, i
+        return self.classes_[bi]
 
     def predict(self, X):
-        return [self.__predict(x[1]) for x in X.iterrows()]
+        predictions = self.predict_proba(X)
+        return [self.__predict_from_probs(probs) for probs in predictions]
 
     def predict_proba(self, X):
-        return [self.__predict_p(x[1]) for x in X.iterrows()]
+        predictions = []
+        for combined_e, connection_e, cols in zip(self.combined_estimators_, self.connections_estimators_, self.cols_):
+            combined = combined_e.predict_proba(X[self.base_cols_ + cols])
+            connect = connection_e.predict_proba(X[cols])
+            predictions.append((combined * self.combined_weight) + ((1 - self.combined_weight) * connect))
+
+        total_strength = max(sum(self.relations_), 1)
+        base = [total_strength * p for p in self.base_estimator_.predict_proba(X[self.base_cols_])]
+        results = []
+        for rel, probs in zip(self.relations_, predictions):
+            results.append([b + p * rel for b, p in zip(base, probs)])
+        return functools.reduce(lambda x, y: [x1 + y1 for x1, y1 in zip(x, y)], results)
