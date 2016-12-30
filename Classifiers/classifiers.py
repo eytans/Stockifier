@@ -1,9 +1,10 @@
 import sklearn.ensemble
-from nltk.cluster.kmeans import KMeansClusterer
+from sklearn.tree import DecisionTreeClassifier
 import sklearn.cluster
 from Utilities.orginizers import *
 import Utilities
 from math import *
+import functools
 import logging
 
 
@@ -13,16 +14,24 @@ def apply_func(func, iterable):
         yield i
 
 
-def create_adaboost(stock_name, data=None, days_forward=1, return_data=False):
+def ready_training_data(stock_name, days_forward=1, change_threshold=0, startdate=None, enddate=None):
     ld = LearningData()
-    if data is None:
-        data = ld.get_stock_data(stock_name)
-        data = ld.add_history_fields(data, stock_name, 10)
-        data = data.dropna()
-    classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > 0)
-    res = sklearn.ensemble.AdaBoostClassifier(n_estimators=200).fit(data, classes)
-    if return_data:
-        res = (res, data, classes)
+    data = ld.get_stock_data(stock_name, startdate=startdate, enddate=enddate)
+    data = ld.add_history_fields(data, stock_name, 10)
+    length = len(data)
+    data = data.dropna()
+    if length - len(data) > 50:
+        logging.warning("dropped more then {} samples containing not a number".format(length - len(data)))
+    classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > change_threshold)
+    return data, classes
+
+
+def create_adaboost(stock_name=None, data=None, classes=None, days_forward=1, base_estimator=DecisionTreeClassifier()):
+    if (data is None or classes is None) and stock_name is None:
+        raise ValueError("Need at least stock_name or data+classes")
+    if data is None or classes is None:
+        data, classes = ready_training_data(stock_name, days_forward=days_forward)
+    res = sklearn.ensemble.AdaBoostClassifier(base_estimator=base_estimator, n_estimators=200).fit(data, classes)
     return res
 
 
@@ -45,6 +54,7 @@ def create_quarter_clusterer(ld: LearningData, stock_names=None):
         q.ready_quarter_data(distance_object.minutes)
 
     shortest = min(map(lambda q: q.data.shape[0], full_data))
+
     def arrange_data_frame(data: pd.DataFrame, len: int):
         res = None
         data = data.iloc[0:len]
@@ -149,7 +159,6 @@ class Quarter(object):
         logging.debug("done {}".format(stock_name))
 
 
-
 # What we need is a classifier which will receive a distance func which will work on one or more norms.
 # in order to do that we need the data foreach quarter. This will be done in the following class which will let me
 # split the data by quarters and interpolate extra points using spline (this is important to see behaviour).
@@ -189,3 +198,40 @@ class QuarterDistance(object):
         new = (u-v).apply(lambda x: fabs(x))
         res = new.max()
         return res
+
+
+# Classifier implementing sklearn standards (for easier cross validation).
+# This class creates 3 classifiers from the model, using the relation classifier if provided.
+# relation classifier should have fields and strength for each connection
+# classification is done using base estimator, strength*connections regularised by combined.
+class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
+    def __init__(self, threshold=0.15, base_estimator=sklearn.ensemble.AdaBoostClassifier()):
+        self.base_estimator = sklearn.base.clone(base_estimator)
+        self.base_cols_ = None
+        self.combined_estimators_ = None
+        self.connections_estimators_ = None
+        self.relations_ = None
+        self.threshold = threshold
+
+    def fit(self, X, y, connection_columns, strengths):
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("number of X rows must be equal to number of y rows.")
+        used_cols = set(functools.reduce(lambda t, k: t+k, connection_columns))
+        self.base_cols_ = [c for c in X.columns if c not in used_cols]
+        self.base_estimator = self.base_estimator.fit(X[self.base_cols_], y)
+
+        self.combined_estimators_ = []
+        self.connections_estimators_ = []
+        self.relations_ = []
+        for cols, stren in zip(connection_columns, strengths):
+            self.relations_.append(stren)
+
+            new_con_est = sklearn.base.clone(self.base_estimator)
+            self.connections_estimators_.append(new_con_est.fit(X[cols], y))
+
+            new_comb_est = sklearn.base.clone(self.base_estimator)
+            self.combined_estimators_.append(new_comb_est.fit(X[self.base_cols_ + cols], y))
+
+        return self
+
+    # TOOD: predict using predict_prob
