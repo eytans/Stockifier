@@ -1,4 +1,4 @@
-from Classifiers.classifiers import create_quarter_clusterer, create_adaboost, ready_training_data
+from Classifiers import create_quarter_clusterer, create_adaboost, ready_training_data
 from Utilities.orginizers import LearningData
 from unittest import TestCase
 from sklearn.model_selection import KFold
@@ -6,7 +6,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.ensemble import BaggingClassifier
-import Utilities
 import logging
 
 
