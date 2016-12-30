@@ -4,6 +4,7 @@ import sklearn.cluster
 from Utilities.orginizers import *
 import Utilities
 from math import *
+import functools
 import logging
 
 
@@ -158,7 +159,6 @@ class Quarter(object):
         logging.debug("done {}".format(stock_name))
 
 
-
 # What we need is a classifier which will receive a distance func which will work on one or more norms.
 # in order to do that we need the data foreach quarter. This will be done in the following class which will let me
 # split the data by quarters and interpolate extra points using spline (this is important to see behaviour).
@@ -198,3 +198,40 @@ class QuarterDistance(object):
         new = (u-v).apply(lambda x: fabs(x))
         res = new.max()
         return res
+
+
+# Classifier implementing sklearn standards (for easier cross validation).
+# This class creates 3 classifiers from the model, using the relation classifier if provided.
+# relation classifier should have fields and strength for each connection
+# classification is done using base estimator, strength*connections regularised by combined.
+class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
+    def __init__(self, threshold=0.15, base_estimator=sklearn.ensemble.AdaBoostClassifier()):
+        self.base_estimator = sklearn.base.clone(base_estimator)
+        self.base_cols_ = None
+        self.combined_estimators_ = None
+        self.connections_estimators_ = None
+        self.relations_ = None
+        self.threshold = threshold
+
+    def fit(self, X, y, connection_columns, strengths):
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("number of X rows must be equal to number of y rows.")
+        used_cols = set(functools.reduce(lambda t, k: t+k, connection_columns))
+        self.base_cols_ = [c for c in X.columns if c not in used_cols]
+        self.base_estimator = self.base_estimator.fit(X[self.base_cols_], y)
+
+        self.combined_estimators_ = []
+        self.connections_estimators_ = []
+        self.relations_ = []
+        for cols, stren in zip(connection_columns, strengths):
+            self.relations_.append(stren)
+
+            new_con_est = sklearn.base.clone(self.base_estimator)
+            self.connections_estimators_.append(new_con_est.fit(X[cols], y))
+
+            new_comb_est = sklearn.base.clone(self.base_estimator)
+            self.combined_estimators_.append(new_comb_est.fit(X[self.base_cols_ + cols], y))
+
+        return self
+
+    # TOOD: predict using predict_prob

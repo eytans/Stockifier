@@ -80,7 +80,6 @@ class LearningData(object):
         if self.legal_markets is None:
             self.legal_markets = self.get_market_names()
 
-
     def __init_market_data(self, market_name=None, force=False):
         if self.database not in LearningData._market_data:
             LearningData._market_data[self.database] = {}
