@@ -1,75 +1,10 @@
 import sklearn.ensemble
-from sklearn.tree import DecisionTreeClassifier
 import sklearn.cluster
 from Utilities.orginizers import *
 import Utilities
 from math import *
 import functools
 import logging
-
-
-def apply_func(func, iterable):
-    for i in iterable:
-        func(i)
-        yield i
-
-
-def ready_training_data(stock_name, days_forward=1, change_threshold=0, startdate=None, enddate=None):
-    ld = LearningData()
-    data = ld.get_stock_data(stock_name, startdate=startdate, enddate=enddate)
-    data = ld.add_history_fields(data, stock_name, 10)
-    length = len(data)
-    data = data.dropna()
-    if length - len(data) > 50:
-        logging.warning("dropped more then {} samples containing not a number".format(length - len(data)))
-    classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > change_threshold)
-    return data, classes
-
-
-def create_adaboost(stock_name=None, data=None, classes=None, days_forward=1, base_estimator=DecisionTreeClassifier()):
-    if (data is None or classes is None) and stock_name is None:
-        raise ValueError("Need at least stock_name or data+classes")
-    if data is None or classes is None:
-        data, classes = ready_training_data(stock_name, days_forward=days_forward)
-    res = sklearn.ensemble.AdaBoostClassifier(base_estimator=base_estimator, n_estimators=200).fit(data, classes)
-    return res
-
-
-def create_quarter_clusterer(ld: LearningData, stock_names=None):
-    if not stock_names:
-        stock_names = ld.get_stock_names()
-    quarters = DataAccessor(DataAccessor.Names.quarter)
-    drop_cols = list(ld.get_stock_data(stock_names[0]).columns)
-    drop_cols.remove('open')
-    drop_cols.remove('volume')
-    stocks_data = [(s, ld.get_stock_data(s).drop(drop_cols, axis=1)) for s in stock_names]
-    full_data = []
-    for s_name, d in stocks_data:
-        if s_name not in quarters:
-            quarters[s_name] = list(Quarter.split_by_quarters(s_name, d))
-        full_data.extend(quarters[s_name])
-
-    distance_object = QuarterDistance(4)
-    for q in full_data:
-        q.ready_quarter_data(distance_object.minutes)
-
-    shortest = min(map(lambda q: q.data.shape[0], full_data))
-
-    def arrange_data_frame(data: pd.DataFrame, len: int):
-        res = None
-        data = data.iloc[0:len]
-        for c in data.columns:
-            if res is None:
-                res = data[c]
-                continue
-            res = res.append(data[c])
-        return res
-
-    full_data = [arrange_data_frame(q.data, shortest) for q in full_data]
-    # clusterer = KMeansClusterer(num_means=6, distance=distance_object.dist, repeats=25, avoid_empty_clusters=True)
-    # results = clusterer.cluster(vectors=full_data)
-    clusterer = sklearn.cluster.KMeans().fit(full_data)
-    return clusterer
 
 
 # def split_quarters_by_cluster(df):
@@ -205,25 +140,36 @@ class QuarterDistance(object):
 # relation classifier should have fields and strength for each connection
 # classification is done using base estimator, strength*connections regularised by combined.
 class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
-    def __init__(self, threshold=0.15, base_estimator=sklearn.ensemble.AdaBoostClassifier()):
+    def __init__(self, threshold=0.15, combined_weight=0.5, base_estimator=sklearn.ensemble.AdaBoostClassifier()):
+        """
+        :param threshold: minimum value of relations to consider.
+        :param combined_weight: the weight to put on the combined classifier.
+        :param base_estimator: the estimator to use as a model for the fit.
+        """
         self.base_estimator = sklearn.base.clone(base_estimator)
-        self.base_cols_ = None
-        self.combined_estimators_ = None
-        self.connections_estimators_ = None
-        self.relations_ = None
         self.threshold = threshold
+        self.combined_weight=combined_weight
 
     def fit(self, X, y, connection_columns, strengths):
+        """
+        :param X: data from which to learn
+        :param y: classifications corresponding to @X
+        :param connection_columns: a list of lists, each of which is the columns of a specific connection
+        :param strengths: strength of a connection corresponding to @connection_columns
+        :return: self after learning the given data
+        """
         if X.shape[0] != y.shape[0]:
             raise ValueError("number of X rows must be equal to number of y rows.")
         used_cols = set(functools.reduce(lambda t, k: t+k, connection_columns))
         self.base_cols_ = [c for c in X.columns if c not in used_cols]
-        self.base_estimator = self.base_estimator.fit(X[self.base_cols_], y)
+        self.base_estimator_ = sklearn.base.clone(self.base_estimator).fit(X[self.base_cols_], y)
 
         self.combined_estimators_ = []
         self.connections_estimators_ = []
         self.relations_ = []
         for cols, stren in zip(connection_columns, strengths):
+            if stren < self.threshold:
+                continue
             self.relations_.append(stren)
 
             new_con_est = sklearn.base.clone(self.base_estimator)
@@ -232,6 +178,29 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
             new_comb_est = sklearn.base.clone(self.base_estimator)
             self.combined_estimators_.append(new_comb_est.fit(X[self.base_cols_ + cols], y))
 
+        self.classes_ = self.base_estimator_.classes_
         return self
 
-    # TOOD: predict using predict_prob
+    def __predict_p(self, x):
+        results = []
+        for combined_e, connection_e in zip(self.combined_estimators_, self.connections_estimators_):
+            combined = combined_e.predict_prob(x)
+            connect = connection_e.predict_prob(x)
+            results.append([cb*self.combined_weight + (1-self.combined_weight)*cn for cb, cn in zip(combined, connect)])
+
+        total_strength = max(sum(self.relations_), 1)
+        base = [total_strength*p for p in self.base_estimator_.predict_proba(x)]
+        for rel, probs in zip(self.relations_, results):
+            base = [b + p*rel for b, p in zip(base, probs)]
+        return base
+
+    def __predict(self, x):
+        probs = self.__predict_p(x)
+        cls, p = max(zip(self.classes_, probs), key=lambda val: val[1])
+        return cls
+
+    def predict(self, X):
+        return [self.__predict(x[1]) for x in X.iterrows()]
+
+    def predict_proba(self, X):
+        return [self.__predict_p(x[1]) for x in X.iterrows()]
