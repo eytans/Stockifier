@@ -82,7 +82,7 @@ class StrengthCalc(object):
         self._accessor = DataAccessor(DataAccessor.Names.for_clustering)
         self._ready = False
         self.data = {}
-        self.__init_data()
+        self.data_to_fit =[]
         self.start = start_date
         self.ld = LearningData()
         self.stocks = stock_list
@@ -97,7 +97,6 @@ class StrengthCalc(object):
 
     def __init_data(self):
         date_array = pd.bdate_range(start=self.start, periods=self.periods, freq=self.freq)
-        data = []
         for st in self.stocks:
             if self.__combined_stock_name(st) not in self._accessor:
                 current_stock_data = self.ld.get_stock_data(st)
@@ -108,7 +107,6 @@ class StrengthCalc(object):
                 except:
                     print(st)
                     continue
-
                 # fill NaN with mean of the column
                 value = value.reset_index()
                 value.columns = ['time', 'open', 'volume']
@@ -120,26 +118,32 @@ class StrengthCalc(object):
                 # we have 2 columns, open and volume and many dates.
                 self._accessor[self.__combined_stock_name(st)] = value
             self.data[st] = self._accessor[self.__combined_stock_name(st)]
-        return np.vstack(np.dstack(data)).T
+            self.data_to_fit.append(self.data[st].values)
+        self.data_to_fit = np.vstack(np.dstack(self.data_to_fit)).T
 
-    def create_clustering_obj(self, n_clusters, data, stock_list):
+    def ready_stock_to_predict(self, stocks):
+        data_arr = []
+        for st in stocks:
+            data_arr.append(self.data[st].values)
+        return np.vstack(np.dstack(data_arr)).T
+
+    def create_clustering_obj(self, n_clusters):
         clr = sklearn.cluster.KMeans(n_clusters=n_clusters)
-        clr.fit(data, stock_list)
+        clr.fit(self.data_to_fit, self.stocks)
         return clr
 
-    def create_array_of_clusters(self,stock_list, start_date="2010-01-01", min_number=3, max_number=120, step=None):
-        data = self.__init_data(start_date=start_date, stock_list=stock_list)
+    def create_array_of_clusters(self, min_number=3, max_number=120, step=None):
         arr_clr = []
         for x in range(min_number, max_number + 1, step):
-            arr_clr.append(self.create_clustering_obj(n_clusters=x, data=data, stock_list=stock_list))
+            arr_clr.append(self.create_clustering_obj(n_clusters=x))
         return arr_clr
 
-    def get_strength(self, stock, market, min_number, max_number, step):
+    def get_strength(self, stock, market, min_number, max_number, step, treshold=0.75):
         market = market_stock_dic[market]
-        arr_clr = self.create_array_of_clusters(stock_list=all_stocks_name, step=step)
-        arr_clr = arr_clr.reverse()
-        stock_data = self.__init_data(stock_list=stock, start_date="2010-01-01")
-        market_data = self.__init_data(stock_list=market, start_date="2010-01-01")
+        arr_clr = self.create_array_of_clusters(min_number=min_number,max_number=max_number, step=step)
+        arr_clr.reverse()
+        stock_data = self.ready_stock_to_predict([stock])
+        market_data = self.ready_stock_to_predict(market)
         strength = 1.0
         for a in arr_clr:
             count = 0
@@ -148,9 +152,10 @@ class StrengthCalc(object):
             for m in market_labels:
                 if stock_label == m:
                     count += 1
-            if count / market_labels > 0.75:
+            if count / len(market_labels) > treshold:
                 return strength
             else:
-                strength -= (1 / len(arr_clr))
+                strength -= 1 / len(arr_clr)
+                strength = round(strength,2)
         return strength
-print(get_strength(stock='NHC',market='Medical Laboratories & Research (Healthcare)',min_number=5,max_number=20,step=5))
+# print(get_strength(stock='NHC',market='Medical Laboratories & Research (Healthcare)',min_number=5,max_number=20,step=5))
