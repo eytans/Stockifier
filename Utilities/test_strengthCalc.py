@@ -16,14 +16,15 @@ class TestStrengthCalc(TestCase):
             self.assertIn(0,c.labels_)
 
     def test_get_strength_has_legal_result(self):
-        d = self.strength.get_strength(stock='ABC',market='Accident & Health Insurance (Financial)',min_number=5,max_number=100,step=5,treshold=0.5)
+        d = self.strength.get_strength(stock='ABC', market='Accident & Health Insurance (Financial)', min_number=5, max_number=100, step=5,
+                                       threshold=0.5)
         self.assertGreaterEqual(d, 0.0)
         self.assertLessEqual(d, 1.0)
 
     def test_get_strength_has_non_trivial_result(self):
         for st in self.strength.stocks:
             d = self.strength.get_strength(stock=st, market='Accident & Health Insurance (Financial)', min_number=5,
-                                           max_number=100, step=5,treshold=0.6)
+                                           max_number=100, step=5, threshold=0.6)
             if d > 0.0:
                 return
         self.fail("Couldn't find a stock with matching of over %75 to market")

@@ -138,7 +138,7 @@ class StrengthCalc(object):
             arr_clr.append(self.create_clustering_obj(n_clusters=x))
         return arr_clr
 
-    def get_strength(self, stock, market, min_number, max_number, step, treshold=0.75):
+    def get_strength(self, stock, market, min_number, max_number, step, threshold=0.75):
         market = market_stock_dic[market]
         arr_clr = self.create_array_of_clusters(min_number=min_number,max_number=max_number, step=step)
         arr_clr.reverse()
@@ -152,7 +152,7 @@ class StrengthCalc(object):
             for m in market_labels:
                 if stock_label == m:
                     count += 1
-            if count / len(market_labels) > treshold:
+            if count / len(market_labels) > threshold:
                 return strength
             else:
                 strength -= 1 / len(arr_clr)
