@@ -158,4 +158,17 @@ class StrengthCalc(object):
                 strength -= 1 / len(arr_clr)
                 strength = round(strength,2)
         return strength
+
+    def get_strength_stock(self, stock, min_number, max_number, step, threshold=0.75):
+        markets = self.ld.get_market_names()
+        strength_dic = dict.fromkeys(markets)
+        for mk in markets:
+            strength_dic[mk] = self.get_strength(stock=stock,market=mk,min_number=min_number,max_number=max_number,step=step,threshold=threshold)
+        return strength_dic
+
+
+
+
+
+
 # print(get_strength(stock='NHC',market='Medical Laboratories & Research (Healthcare)',min_number=5,max_number=20,step=5))

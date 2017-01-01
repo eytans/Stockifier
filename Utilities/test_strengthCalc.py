@@ -29,4 +29,15 @@ class TestStrengthCalc(TestCase):
                 return
         self.fail("Couldn't find a stock with matching of over %75 to market")
 
+    def test_get_strength_stock(self):
+        d = self.strength.get_strength_stock(stock='DEPO',  min_number=5, max_number=20, step=5,
+                                       threshold=0.5)
+        self.assertEqual(len(d.keys()),20)
+        self.assertEqual(set(d.keys()), set(self.ld.get_market_names()))
+        for k in d.keys():
+            self.assertGreaterEqual(d[k], 0.0)
+            self.assertLessEqual(d[k], 1.0)
+
+
+
 
