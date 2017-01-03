@@ -7,12 +7,18 @@ import sklearn
 
 def ready_training_data(stock_name, history_range=10, days_forward=1, change_threshold=0, startdate=None, enddate=None):
     ld = LearningData()
+    logging.debug("readying data for {}".format(stock_name))
     data = ld.get_stock_data(stock_name, startdate=startdate, enddate=enddate)
     data = ld.add_history_fields(data, stock_name, history_range)
     length = len(data)
+    for col in data.columns:
+        if data[col].isnull().sum() > 100:
+            logging.warning(
+                "dropping {} as it is missing {} values".format(col, data[col].isnull().sum()))
+            data = data.drop(col, axis=1)
     data = data.dropna()
     if length - len(data) > 50:
-        logging.warning("dropped more then {} samples containing not a number".format(length - len(data)))
+        logging.warning("dropped more then {} samples of {} containing not a number".format(length - len(data), stock_name))
     classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > change_threshold)
     return data, classes
 

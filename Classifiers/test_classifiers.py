@@ -54,3 +54,6 @@ class Test_classifiers(TestCase):
         print("error reduction was: {}".format(acc - threshold))
         self.assertGreaterEqual(acc, 0.75)
 
+    def test_ready_training_data(self):
+        self.assertIsNotNone(ready_training_data('ISIS'))
+
