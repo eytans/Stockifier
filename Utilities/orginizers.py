@@ -8,6 +8,7 @@ import enum
 import gzip
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from collections.abc import Mapping
+import logging
 
 all_stocks_name = ['AFL', 'AIZ', 'CNO', 'EIG', 'GLRE', 'GTS', 'PRA', 'UNM', 'ACET', 'AI', 'APD', 'ARG', 'ASH', 'BAS',
                    'BCPC', 'CE', 'DOW', 'EMN', 'FF', 'FMC', 'HAL', 'HALO', 'HUN', 'LXU', 'MTX', 'PX', 'SHLM', 'TREC',
@@ -236,21 +237,10 @@ class TrainingData(object):
         self.days_forward = days_forward
         self.data = self.ld.get_stock_data(name, startdate=startdate, enddate=enddate)
         if self.data.shape[0] + days_forward > self.ld.get_stock_data(name).shape[0]:
-            self.data = self.data.iloc[0:self.ld.get_stock_data(name).shape[0] - (days_forward + self.data.shape[0] + days_forward)]
-        # TODO cleanup bad data
+            self.data = self.data.iloc[0:self.ld.get_stock_data(name).shape[0] - (days_forward + self.data.shape[0])]
         self.threshold = threshold
         self.regulizer = StandardScaler()
         self._fitted = False
-        # length = len(data)
-        # for col in data.columns:
-        #     if data[col].isnull().sum() > 100:
-        #         logging.warning(
-        #             "dropping {} as it is missing {} values".format(col, data[col].isnull().sum()))
-        #         data = data.drop(col, axis=1)
-        # data = data.dropna()
-        # if length - len(data) > 50:
-        #     logging.warning(
-        #         "dropped more then {} samples of {} containing not a number".format(length - len(data), stock_name))
 
     def add_history_fields(self, stock_range, market_range=None, legal_markets=None):
         if not market_range:
@@ -336,13 +326,33 @@ class TrainingData(object):
         if not self._fitted:
             self.data = self.regulizer.fit_transform(self.data)
             self._fitted = True
-        return self.regulizer.transform(data)
+        return pd.DataFrame(self.regulizer.transform(data), index=data.index, columns=data.columns)
+
+    @staticmethod
+    def cleanup_data(data):
+        start_length = len(data)
+        # drop rows with more then half of the values missing
+        threshold = 0.5
+        data = data.dropna(thresh=round(threshold*len(data.columns)))
+        if start_length - len(data) > 0.1 * start_length:
+            logging.warning(
+                "dropped more then {} samples missing more then {}% of the values".format(start_length - len(data),
+                                                                                         threshold*100))
+        length = len(data)
+        # drop columns with more then 20% of the values missing
+        for col in data.columns:
+            if data[col].isnull().sum() > 0.2 * length:
+                logging.warning(
+                    "dropping {} as it is missing {} values".format(col, data[col].isnull().sum()))
+                data = data.drop(col, axis=1)
+        # fill missing data with median
+        data = data.fillna(data.mean())
+        return data
 
     def get(self):
         if not self._fitted:
-            # TODO: cleanup in init
             # TODO: maybe drop change before transform
-            self.data = self.data.fillna(0)
+            self.data = self.cleanup_data(self.data)
             self.data = pd.DataFrame(self.regulizer.fit_transform(self.data), index=self.data.index,
                                      columns=self.data.columns)
             self._fitted = True
