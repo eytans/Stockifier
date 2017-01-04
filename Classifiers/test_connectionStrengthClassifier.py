@@ -6,7 +6,7 @@ from unittest import TestCase
 
 class TestConnectionStrengthClassifier(TestCase):
     def setUp(self):
-        self.data, self.classes = TrainingData('ABC').add_history_fields(1).get()
+        self.data, self.classes = TrainingData('ABC').add_history(1).get()
         self.ld = LearningData()
         markets = [clean_market_name(m) for m in self.ld.get_market_names()]
         cols = self.data.columns

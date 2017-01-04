@@ -242,7 +242,7 @@ class TrainingData(object):
         self.regulizer = StandardScaler()
         self._fitted = False
 
-    def add_history_fields(self, stock_range, market_range=None, legal_markets=None):
+    def add_history(self, stock_range, market_range=None, legal_markets=None):
         if not market_range:
             market_range = stock_range
         if not legal_markets:
@@ -285,7 +285,7 @@ class TrainingData(object):
 
         return self
 
-    def drop_history_fields(self, stock_history_range=None, market_history_range=None):
+    def drop_history(self, stock_history_range=None, market_history_range=None):
         all_market_history_fields, all_stock_history_fields = self._history_field_names()
 
         if stock_history_range:

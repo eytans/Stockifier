@@ -8,7 +8,7 @@ class TestTrainingData(TestCase):
         self.td = TrainingData('ISIS')
 
     def test_add_history_fields_are_not_nan(self):
-        self.td.add_history_fields(10)
+        self.td.add_history(10)
         column_count = len(self.td.data.columns)
         data, classes = self.td.get()
         self.assertIsNotNone(data)
