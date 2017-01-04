@@ -51,7 +51,7 @@ class TestStrengthCalcTimes(TestCase):
         self.expected_init_time = 25
         self.expected_array_time = 21
         self.expected_ready_stock_time = 0.001
-        self.expected_strength_calc = 20
+        self.expected_strength_calc = 0.5
 
     def test_init_data_not_slow(self):
         t = timeit.timeit("clustering.StrengthCalc()", setup='from Utilities import clustering', number=self.runs)
