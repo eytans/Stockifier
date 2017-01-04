@@ -1,33 +1,11 @@
 from Classifiers.classifiers import *
-from Utilities.orginizers import LearningData, DataAccessor
+from Utilities.orginizers import LearningData, DataAccessor, TrainingData
 from sklearn.tree import DecisionTreeClassifier
 import logging
 import sklearn
 
 
-def ready_training_data(stock_name, history_range=10, days_forward=1, change_threshold=0, startdate=None, enddate=None):
-    ld = LearningData()
-    logging.debug("readying data for {}".format(stock_name))
-    data = ld.get_stock_data(stock_name, startdate=startdate, enddate=enddate)
-    data = ld.add_history_fields(data, stock_name, history_range)
-    length = len(data)
-    for col in data.columns:
-        if data[col].isnull().sum() > 100:
-            logging.warning(
-                "dropping {} as it is missing {} values".format(col, data[col].isnull().sum()))
-            data = data.drop(col, axis=1)
-    data = data.dropna()
-    if length - len(data) > 50:
-        logging.warning("dropped more then {} samples of {} containing not a number".format(length - len(data), stock_name))
-    classes = ld.get_future_change_classification(data, stock_name, days_forward).apply(lambda x: x > change_threshold)
-    return data, classes
-
-
-def create_adaboost(stock_name=None, data=None, classes=None, days_forward=1, base_estimator=DecisionTreeClassifier()):
-    if (data is None or classes is None) and stock_name is None:
-        raise ValueError("Need at least stock_name or data+classes")
-    if data is None or classes is None:
-        data, classes = ready_training_data(stock_name, days_forward=days_forward)
+def create_adaboost(data, classes,base_estimator=DecisionTreeClassifier()):
     res = sklearn.ensemble.AdaBoostClassifier(base_estimator=base_estimator, n_estimators=200).fit(data, classes)
     return res
 

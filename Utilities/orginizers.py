@@ -6,7 +6,7 @@ import Utilities
 import datetime
 import enum
 import gzip
-from pathos import multiprocessing
+from sklearn.preprocessing import StandardScaler, RobustScaler
 from collections.abc import Mapping
 
 all_stocks_name = ['AFL', 'AIZ', 'CNO', 'EIG', 'GLRE', 'GTS', 'PRA', 'UNM', 'ACET', 'AI', 'APD', 'ARG', 'ASH', 'BAS',
@@ -148,24 +148,12 @@ class LearningData(object):
             for name in names:
                 self.__init_stock_data(name, force)
 
-                # def work_on_it(name):
-                #     ld = LearningData()
-                #     query = {'ticker': name}
-                #     query['date'] = {'$lt': middle}
-                #     first = pd.DataFrame(list(ld.stocks.find(query)))
-                #     query['date'] = {'$gte': middle}
-                #     second = pd.DataFrame(list(ld.stocks.find(query)))
-                #     data[name] = pd.concat([first, second]).set_index(['date'])
-                #
-                # p.map(work_on_it, names)
-
     def __init_by_id_data(self, force=False):
         if self._market_by_id is None or force:
             self.__init_market_data(force=force)
             frames = self._market_data[self.database].values()
             self._market_by_id = pd.concat(frames)
             self._market_by_id = self._market_by_id.set_index('_id')
-            self._market_by_id = self.drop_history_fields(self._market_by_id)
 
     def get_future_change_classification(self, data, stock_name, days_forward):
         full_data = self.get_stock_data(stock_name)
@@ -217,83 +205,11 @@ class LearningData(object):
         temp = self.slice_by_date(self._stock_data[self.database][stock_name], startdate, enddate)
         return temp.drop(list(self.cols_to_drop), axis=1)
 
-    def add_history_fields(self, data, stock_name, stock_range, market_range=None, legal_markets=None):
-        if not market_range:
-            market_range = stock_range
-        if not legal_markets:
-            if self.legal_markets:
-                legal_markets = self.legal_markets
-            else:
-                legal_markets = self.get_market_names()
-
-        res_data = data.copy(False)
-        full_data = self.get_stock_data(stock_name)
-
-        if full_data.shape[0] < res_data.shape[0] + stock_range:
-            res_data = res_data.iloc[res_data.shape[0] + stock_range - full_data.shape[0]:]
-        for i in range(stock_range):
-            if res_data.iloc[i].name == full_data.iloc[0].name:
-                res_data = res_data.iloc[stock_range - i:]
-
-        res_data.set_index([list(range(res_data.shape[0]))])
-
-        for i in range(1, 1 + stock_range):
-            end = res_data.iloc[-i]
-            history_end_index = full_data.index.get_loc(end.name)
-            history_start_index = history_end_index - res_data.shape[0]
-            history_data = full_data.iloc[history_start_index:history_end_index]
-            history_data.set_index([list(range(history_data.shape[0]))])
-
-            for c in history_data.columns:
-                res_data[Utilities.stock_history_field(i, c)] = history_data[c]
-
-        for i in range(1, 1 + market_range):
-            end = data.iloc[-i]
-            for m in legal_markets:
-                try:
-                    history_data = self.get_market_data(m)
-                    history_end_index = history_data.index.get_loc(end.name)
-                    history_start_index = history_end_index - data.shape[0]
-                    history_data = history_data.iloc[history_start_index:history_end_index]
-                    history_data.set_index([list(range(history_data.shape[0]))])
-
-                    for c in history_data.columns:
-                        res_data[Utilities.market_history_field(i, m, c)] = history_data[c]
-                except:
-                    continue
-
-        return res_data
-
-    def drop_history_fields(self, df, stock_history_range=None, market_history_range=None):
-        all_market_history_fields, all_stock_history_fields = self._history_field_names()
-
-        if stock_history_range:
-            bad_stock_fields = set(all_stock_history_fields[stock_history_range:])
-        else:
-            bad_stock_fields = set(all_stock_history_fields)
-
-        if market_history_range:
-            bad_market_fields = set(all_market_history_fields[market_history_range * len(self.get_market_names()):])
-        else:
-            bad_market_fields = set(all_market_history_fields)
-
-        stock_drop_columns = [c for c in df.columns if c in bad_stock_fields]
-        market_drop_columns = [c for c in df.columns if c in bad_market_fields]
-        # drops all columns which shouldn't be here (all the names gathered)
-        return df.drop(stock_drop_columns + market_drop_columns, axis=1)
-
     def get_market_names(self):
         return self.markets.distinct('market_name')
 
     def get_stock_names(self):
         return self.stocks.distinct('ticker')
-
-    def _history_field_names(self):
-        # TODO: less hacky range
-        stock_history_fields = [Utilities.stock_history_field(i) for i in range(0, 10000)]
-        market_names = self.get_market_names()
-        market_history_fields = [Utilities.market_history_field(i, m) for i in range(0, 10000) for m in market_names]
-        return market_history_fields, stock_history_fields
 
     def get_market_stock_dic(self):
         """
@@ -311,3 +227,124 @@ class LearningData(object):
             else:
                 market_dic[market] += [st]
         return market_dic
+
+
+class TrainingData(object):
+    def __init__(self, name, days_forward=1, startdate=None, enddate=None, threshold=lambda x: x>0):
+        self.name = name
+        self.ld = LearningData()
+        self.days_forward = days_forward
+        self.data = self.ld.get_stock_data(name, startdate=startdate, enddate=enddate)
+        if self.data.shape[0] + days_forward > self.ld.get_stock_data(name).shape[0]:
+            self.data = self.data.iloc[0:self.ld.get_stock_data(name).shape[0] - (days_forward + self.data.shape[0] + days_forward)]
+        # TODO cleanup bad data
+        self.threshold = threshold
+        self.regulizer = StandardScaler()
+        self._fitted = False
+        # length = len(data)
+        # for col in data.columns:
+        #     if data[col].isnull().sum() > 100:
+        #         logging.warning(
+        #             "dropping {} as it is missing {} values".format(col, data[col].isnull().sum()))
+        #         data = data.drop(col, axis=1)
+        # data = data.dropna()
+        # if length - len(data) > 50:
+        #     logging.warning(
+        #         "dropped more then {} samples of {} containing not a number".format(length - len(data), stock_name))
+
+    def add_history_fields(self, stock_range, market_range=None, legal_markets=None):
+        if not market_range:
+            market_range = stock_range
+        if not legal_markets:
+            legal_markets = self.ld.get_market_names()
+
+        full_data = self.ld.get_stock_data(self.name)
+
+        if full_data.shape[0] < self.data.shape[0] + stock_range:
+            self.data = self.data.iloc[self.data.shape[0] + stock_range - full_data.shape[0]:]
+        for i in range(stock_range):
+            if self.data.iloc[i].name == full_data.iloc[0].name:
+                self.data = self.data.iloc[stock_range - i:]
+
+        self.data.set_index([list(range(self.data.shape[0]))])
+
+        for i in range(1, 1 + stock_range):
+            end = self.data.iloc[-i]
+            history_end_index = full_data.index.get_loc(end.name)
+            history_start_index = history_end_index - self.data.shape[0]
+            history_data = full_data.iloc[history_start_index:history_end_index]
+            history_data.set_index([list(range(history_data.shape[0]))])
+
+            for c in history_data.columns:
+                self.data[Utilities.stock_history_field(i, c)] = history_data[c]
+
+        for i in range(1, 1 + market_range):
+            end = self.data.iloc[-i]
+            for m in legal_markets:
+                try:
+                    history_data = self.ld.get_market_data(m)
+                    history_end_index = history_data.index.get_loc(end.name)
+                    history_start_index = history_end_index - self.data.shape[0]
+                    history_data = history_data.iloc[history_start_index:history_end_index]
+                    history_data.set_index([list(range(history_data.shape[0]))])
+
+                    for c in history_data.columns:
+                        self.data[Utilities.market_history_field(i, m, c)] = history_data[c]
+                except:
+                    continue
+
+        return self
+
+    def drop_history_fields(self, stock_history_range=None, market_history_range=None):
+        all_market_history_fields, all_stock_history_fields = self._history_field_names()
+
+        if stock_history_range:
+            bad_stock_fields = set(all_stock_history_fields[stock_history_range:])
+        else:
+            bad_stock_fields = set(all_stock_history_fields)
+
+        if market_history_range:
+            bad_market_fields = set(all_market_history_fields[market_history_range * len(self.ld.get_market_names()):])
+        else:
+            bad_market_fields = set(all_market_history_fields)
+
+        stock_drop_columns = [c for c in self.data.columns if c in bad_stock_fields]
+        market_drop_columns = [c for c in self.data.columns if c in bad_market_fields]
+        # drops all columns which shouldn't be here (all the names gathered)
+        self.data.drop(stock_drop_columns + market_drop_columns, axis=1, inplace=True)
+        return self
+
+    def _history_field_names(self):
+        # TODO: less hacky range
+        stock_history_fields = [Utilities.stock_history_field(i) for i in range(0, 10000)]
+        market_names = self.ld.get_market_names()
+        market_history_fields = [Utilities.market_history_field(i, m) for i in range(0, 10000) for m in market_names]
+        return market_history_fields, stock_history_fields
+
+    @staticmethod
+    def slice_by_date(df, startdate, enddate):
+        if startdate and not enddate:
+            return df[startdate:]
+        if enddate and not startdate:
+            return df[:enddate]
+        elif enddate and startdate:
+            return df[startdate:enddate]
+        else:
+            return df.copy(False)
+
+    def transform(self, data):
+        if not self._fitted:
+            self.data = self.regulizer.fit_transform(self.data)
+            self._fitted = True
+        return self.regulizer.transform(data)
+
+    def get(self):
+        if not self._fitted:
+            # TODO: cleanup in init
+            # TODO: maybe drop change before transform
+            self.data = self.data.fillna(0)
+            self.data = pd.DataFrame(self.regulizer.fit_transform(self.data), index=self.data.index,
+                                     columns=self.data.columns)
+            self._fitted = True
+        return self.data, \
+               self.ld.get_future_change_classification(self.data, self.name, self.days_forward).apply(self.threshold)

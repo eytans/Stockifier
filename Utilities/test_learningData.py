@@ -19,9 +19,3 @@ class TestLearningData(TestCase):
         except:
             traceback.print_exc()
             self.fail()
-
-    def test_add_history_fields_doesnt_fail(self):
-        self.assertIsNotNone(self.df)
-        self.df = self.ld.slice_by_date(self.df, self.start, self.end)
-        res = self.ld.add_history_fields(self.df, 'ABC', 10)
-        self.assertGreater(res.shape[1], self.df[1])
