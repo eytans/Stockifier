@@ -34,8 +34,7 @@ class Test_classifiers(TestCase):
         stock_name = 'LCI'
         group_kfold = KFold(n_splits=5, shuffle=True)
         accuracies = []
-        td = TrainingData(stock_name, 3)
-        data, classes = td.add_history(10).get()
+        data, classes = TrainingData(stock_name, 3).add_history(10).get()
         data.drop('change', axis=1, inplace=True)
         for train_indices, test_indices in group_kfold.split(data):
             train_data = data.loc[data.index[train_indices]]

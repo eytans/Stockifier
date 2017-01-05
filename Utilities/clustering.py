@@ -2,6 +2,9 @@ import sklearn.cluster
 from Utilities.orginizers import LearningData,DataAccessor
 import pandas as pd
 import numpy as np
+import timeit
+import functools
+import logging
 
 all_stocks_name = ['AFL', 'AIZ', 'CNO', 'EIG', 'GLRE', 'GTS', 'PRA', 'UNM', 'ACET', 'AI', 'APD', 'ARG', 'ASH', 'BAS',
                    'BCPC', 'CE', 'DOW', 'EMN', 'FF', 'FMC', 'HAL', 'HALO', 'HUN', 'LXU', 'MTX', 'PX', 'SHLM', 'TREC',
@@ -80,9 +83,8 @@ market_stock_dic = {
 class StrengthCalc(object):
     def __init__(self, start_date="1995-01-01", stock_list=None, freq="BQ", periods=(2016 - 1995) * 4 + 3):
         self._accessor = DataAccessor(DataAccessor.Names.for_clustering)
-        self._ready = False
         self.data = {}
-        self.data_to_fit =[]
+        self.data_to_fit = []
         self.start = start_date
         self.ld = LearningData()
         self.stocks = stock_list
@@ -104,8 +106,8 @@ class StrengthCalc(object):
                 # gets the open and volume of the current df and calculate the percentage of change
                 try:
                     value = current_stock_data.loc[date_array][['open', 'volume']]
-                except:
-                    print(st)
+                except Exception as e:
+                    logging.warning("{} was skipped because of {}".format(st, str(e)))
                     continue
                 # fill NaN with mean of the column
                 value = value.reset_index()
@@ -127,6 +129,7 @@ class StrengthCalc(object):
             data_arr.append(self.data[st].values)
         return np.vstack(np.dstack(data_arr)).T
 
+    @functools.lru_cache(maxsize=325)
     def create_clustering_obj(self, n_clusters):
         clr = sklearn.cluster.KMeans(n_clusters=n_clusters)
         clr.fit(self.data_to_fit, self.stocks)
@@ -140,10 +143,14 @@ class StrengthCalc(object):
 
     def get_strength(self, stock, market, min_number, max_number, step, threshold=0.75):
         market = market_stock_dic[market]
-        arr_clr = self.create_array_of_clusters(min_number=min_number,max_number=max_number, step=step)
+        arr_clr = self.create_array_of_clusters(min_number=min_number, max_number=max_number, step=step)
         arr_clr.reverse()
         stock_data = self.ready_stock_to_predict([stock])
         market_data = self.ready_stock_to_predict(market)
+        return self._calc_strength(stock_data, market_data, arr_clr, threshold)
+
+    @staticmethod
+    def _calc_strength(stock_data, market_data, arr_clr, threshold):
         strength = 1.0
         for a in arr_clr:
             count = 0
@@ -156,7 +163,7 @@ class StrengthCalc(object):
                 return strength
             else:
                 strength -= 1 / len(arr_clr)
-                strength = round(strength,2)
+                strength = round(strength, 2)
         return strength
 
     def get_strength_stock(self, stock, min_number, max_number, step, threshold=0.75):

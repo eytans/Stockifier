@@ -9,6 +9,7 @@ import gzip
 from sklearn.preprocessing import StandardScaler, RobustScaler
 from collections.abc import Mapping
 import logging
+import functools
 
 all_stocks_name = ['AFL', 'AIZ', 'CNO', 'EIG', 'GLRE', 'GTS', 'PRA', 'UNM', 'ACET', 'AI', 'APD', 'ARG', 'ASH', 'BAS',
                    'BCPC', 'CE', 'DOW', 'EMN', 'FF', 'FMC', 'HAL', 'HALO', 'HUN', 'LXU', 'MTX', 'PX', 'SHLM', 'TREC',
@@ -206,9 +207,11 @@ class LearningData(object):
         temp = self.slice_by_date(self._stock_data[self.database][stock_name], startdate, enddate)
         return temp.drop(list(self.cols_to_drop), axis=1)
 
+    @functools.lru_cache()
     def get_market_names(self):
         return self.markets.distinct('market_name')
 
+    @functools.lru_cache()
     def get_stock_names(self):
         return self.stocks.distinct('ticker')
 
