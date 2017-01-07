@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler, RobustScaler
 from collections.abc import Mapping
 import logging
 import functools
+import types
 
 all_stocks_name = ['AFL', 'AIZ', 'CNO', 'EIG', 'GLRE', 'GTS', 'PRA', 'UNM', 'ACET', 'AI', 'APD', 'ARG', 'ASH', 'BAS',
                    'BCPC', 'CE', 'DOW', 'EMN', 'FF', 'FMC', 'HAL', 'HALO', 'HUN', 'LXU', 'MTX', 'PX', 'SHLM', 'TREC',
@@ -234,16 +235,40 @@ class LearningData(object):
 
 
 class TrainingData(object):
-    def __init__(self, name, days_forward=1, startdate=None, enddate=None, threshold=lambda x: x>0):
+    def __init__(self, name, days_forward=1, startdate=None, enddate=None, threshold='default'):
         self.name = name
         self.ld = LearningData()
         self.days_forward = days_forward
         self.data = self.ld.get_stock_data(name, startdate=startdate, enddate=enddate)
         if self.data.shape[0] + days_forward > self.ld.get_stock_data(name).shape[0]:
             self.data = self.data.iloc[0:self.ld.get_stock_data(name).shape[0] - (days_forward + self.data.shape[0])]
-        self.threshold = threshold
+        self._threshold = None
         self.regulizer = StandardScaler()
         self._fitted = False
+        self.set_threshold(threshold)
+
+    def __repr__(self):
+        return "TrainingData: name={}, days_forward={}".format(self.name, self.days_forward)
+
+    def set_threshold(self, thresh):
+        if thresh == 'default':
+            thresh = 0
+        elif thresh == 'middle':
+            thresh = self.get_change().median()
+        elif isinstance(thresh, float) and 1 > thresh > 0:
+            thresh = self.get_change().quantile(thresh)
+        else:
+            if callable(thresh):
+                self._threshold = thresh
+                return self
+            else:
+                raise ValueError("Need to receive 'default' 'middle' number or function")
+        self._threshold = lambda x: x > thresh
+        logging.info("{}: threshold found is {}".format(self, thresh))
+        return self
+
+    def get_change(self):
+        return self.ld.get_future_change_classification(self.data, self.name, self.days_forward)
 
     def add_history(self, stock_range, market_range=None, legal_markets=None):
         if not market_range:
@@ -359,5 +384,4 @@ class TrainingData(object):
             self.data = pd.DataFrame(self.regulizer.fit_transform(self.data), index=self.data.index,
                                      columns=self.data.columns)
             self._fitted = True
-        return self.data, \
-               self.ld.get_future_change_classification(self.data, self.name, self.days_forward).apply(self.threshold)
+        return self.data, self.get_change().apply(self._threshold)
