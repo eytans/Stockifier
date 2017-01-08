@@ -14,22 +14,23 @@ import logging
 
 class Quarter(object):
     def __init__(self, data: pd.DataFrame, cols=('open', 'volume'), name=''):
-        self.reset(data, cols)
+        self.reset(data, cols, name)
 
     def reset(self, data, cols=('open', 'volume'), name=''):
         drop_cols = list(data.columns)
         for c in cols:
             drop_cols.remove(c)
-        self.name = name
         self.data = data.drop(drop_cols, axis=1)
         self.start = self.data.iloc[0].name
         self.end = self.data.iloc[-1].name
+        self.name = "{}-{}-{}".format(name, self.start, self.end)
         self.ready = False
         self.cluster = None
 
     def ready_quarter_data(self, minutes):
         if self.ready:
-            return
+            return self
+        self.data = TrainingData.cleanup_data(self.data, fill=False).astype(float)
         u = self.interpolate_extra_points(minutes)
         for c in u.columns:
             # times 1000 will later make the numerical error smaller (as now its with 0 error) but will not hurt
@@ -38,6 +39,7 @@ class Quarter(object):
             u[c] = 1000 * (u[c] / u[c].abs().sum())
         self.data = u
         self.ready = True
+        return self
 
     def interpolate_extra_points(self, minutes: int):
         # Supposedly always includes original values because splitting by fraction of day

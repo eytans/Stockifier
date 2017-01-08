@@ -15,7 +15,7 @@ class Test_classifiers(TestCase):
         self.ld = LearningData()
 
     def test_create_quarter_clusterer(self):
-        clusterer = create_quarter_clusterer(LearningData(), ['AMRS', 'ALOG', 'AMT', 'BXP', 'CHH'])
+        clusterer = create_quarter_clusterer(LearningData())
         self.assertIsNotNone(clusterer)
 
     def test_tree_adaboost(self):

@@ -357,7 +357,7 @@ class TrainingData(object):
         return pd.DataFrame(self.regulizer.transform(data), index=data.index, columns=data.columns)
 
     @staticmethod
-    def cleanup_data(data):
+    def cleanup_data(data, fill=True):
         start_length = len(data)
         # drop rows with more then half of the values missing
         threshold = 0.5
@@ -374,7 +374,8 @@ class TrainingData(object):
                     "dropping {} as it is missing {} values".format(col, data[col].isnull().sum()))
                 data = data.drop(col, axis=1)
         # fill missing data with median
-        data = data.fillna(data.mean())
+        if fill:
+            data = data.fillna(data.mean())
         return data
 
     def get(self):
