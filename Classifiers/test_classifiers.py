@@ -51,5 +51,5 @@ class Test_classifiers(TestCase):
         self.assertGreaterEqual(acc, 0.75)
 
     def test_ready_training_data(self):
-        self.assertIsNotNone(TrainingData('ISIS').get())
+        self.assertIsNotNone(TrainingData('SHW').add_history(10).set_threshold(0.8).get())
 

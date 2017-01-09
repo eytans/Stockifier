@@ -302,7 +302,7 @@ class TrainingData(object):
             end = self.data.iloc[-i]
             for m in legal_markets:
                 try:
-                    history_data = self.ld.get_market_data(m)
+                    history_data = self.ld.get_market_data(m).sort_index()
                     history_end_index = history_data.index.get_loc(end.name)
                     history_start_index = history_end_index - self.data.shape[0]
                     history_data = history_data.iloc[history_start_index:history_end_index]
