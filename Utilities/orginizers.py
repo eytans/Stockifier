@@ -235,9 +235,11 @@ class LearningData(object):
 
 
 class TrainingData(object):
-    def __init__(self, name, days_forward=1, startdate=None, enddate=None, threshold='default'):
+    def __init__(self, name, days_forward=1, startdate=None, enddate=None, threshold='default', ld=None):
         self.name = name
-        self.ld = LearningData()
+        self.ld = ld
+        if ld is None:
+            self.ld = LearningData()
         self.days_forward = days_forward
         self.data = self.ld.get_stock_data(name, startdate=startdate, enddate=enddate)
         if self.data.shape[0] + days_forward > self.ld.get_stock_data(name).shape[0]:
