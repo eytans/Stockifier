@@ -5,6 +5,7 @@ import numpy as np
 import timeit
 import functools
 import logging
+from math import ceil, floor
 
 all_stocks_name = ['AFL', 'AIZ', 'CNO', 'EIG', 'GLRE', 'GTS', 'PRA', 'UNM', 'ACET', 'AI', 'APD', 'ARG', 'ASH', 'BAS',
                    'BCPC', 'CE', 'DOW', 'EMN', 'FF', 'FMC', 'HAL', 'HALO', 'HUN', 'LXU', 'MTX', 'PX', 'SHLM', 'TREC',
@@ -150,6 +151,10 @@ class StrengthCalc(object):
         return self._calc_strength(stock_data, market_data, arr_clr, threshold)
 
     @staticmethod
+    def float_round(num, places=0, direction=ceil):
+        return direction(num * (10 ** places)) / float(10 ** places)
+
+    @staticmethod
     def _calc_strength(stock_data, market_data, arr_clr, threshold):
         strength = 1.0
         for a in arr_clr:
@@ -163,8 +168,10 @@ class StrengthCalc(object):
                 return strength
             else:
                 strength -= 1 / len(arr_clr)
-                strength = round(strength, 2)
+                strength = StrengthCalc.float_round(strength, places=2, direction=ceil)
         return strength
+
+
 
     def get_strength_stock(self, stock, min_number, max_number, step, threshold=0.75):
         markets = self.ld.get_market_names()

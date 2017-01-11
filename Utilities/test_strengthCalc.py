@@ -93,6 +93,13 @@ market_data = strength.ready_stock_to_predict(market)
         logging.info(t)
         self.assertGreaterEqual(self.expected_strength_calc, t)
 
+    def test_investigate_fail(self):
+        from Utilities import clustering
+        strength = clustering.StrengthCalc()
+        dic = strength.get_strength_stock(stock='SHW',min_number=5,max_number=325,step=2,threshold=0.1)
+        for item in dic.items():
+            self.assertGreaterEqual(item[1],0)
+
 
 
 
