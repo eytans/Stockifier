@@ -5,6 +5,8 @@ import Utilities
 from math import *
 import functools
 import logging
+import itertools
+import numpy as np
 
 
 # def split_quarters_by_cluster(df):
@@ -210,3 +212,47 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         for rel, probs in zip(self.relations_, predictions):
             results.append([b + p * rel for b, p in zip(base, probs)])
         return functools.reduce(lambda x, y: [x1 + y1 for x1, y1 in zip(x, y)], results)
+
+
+class Quarterizer(sklearn.base.BaseEstimator):
+    def __init__(self, cols=('open', 'volume')):
+        self.cols = cols
+        self.length_ = 0
+        self.distance_ = QuarterDistance(4)
+
+    def fit(self, X: pd.DataFrame):
+        if not isinstance(X.index, pd.SparseDataFrame):
+            raise RuntimeError("Quartariser data must be indexed by date")
+
+        X = self.to_quarters(X)
+
+        self.length_ = min(map(lambda q: q.data.shape[0], X))
+        return self
+
+    def to_quarters(self, X: pd.DataFrame):
+        for c in X.columns:
+            if c not in self.cols:
+                X.drop(c, axis=1)
+        quarters = list(Quarter.split_by_quarters('', X))
+
+        def no_col_empty(q: Quarter):
+            for col in q.data.columns:
+                if q.data[col].isnull().sum() == len(q.data):
+                    return False
+            return True
+
+        data_it = map(lambda q: q.ready_quarter_data(self.distance_.minutes), quarters)
+        X = list(filter(no_col_empty, data_it))
+        return X
+
+    def transform(self, X: pd.DataFrame):
+        # TODO: take care of length and interpplotation of missing data
+        data = [q.data for q in self.to_quarters(X)]
+        data = [np.concatenate([d[c].values for c in d.columns]) for d in data]
+        data = pd.DataFrame.from_records(data)
+        return data
+
+
+
+
+
