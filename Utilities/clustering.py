@@ -157,6 +157,7 @@ class StrengthCalc(object):
     @staticmethod
     def _calc_strength(stock_data, market_data, arr_clr, threshold):
         strength = 1.0
+        dec = StrengthCalc.float_round(num=1 / len(arr_clr), places=3 ,direction=floor)
         for a in arr_clr:
             count = 0
             stock_label = a.predict(stock_data)
@@ -167,8 +168,7 @@ class StrengthCalc(object):
             if count / len(market_labels) > threshold:
                 return strength
             else:
-                strength -= 1 / len(arr_clr)
-                strength = StrengthCalc.float_round(strength, places=2, direction=ceil)
+                strength -= dec
         return strength
 
 
