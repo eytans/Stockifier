@@ -221,7 +221,8 @@ class Quarterizer(sklearn.base.BaseEstimator):
         self.distance_ = QuarterDistance(4)
 
     def fit(self, X: pd.DataFrame):
-        if not isinstance(X.index, pd.SparseDataFrame):
+        if (not isinstance(X.index, pd.DatetimeIndex) and not isinstance(X.index, pd.TimedeltaIndex) and
+                not isinstance(X.index, pd.PeriodIndex)):
             raise RuntimeError("Quartariser data must be indexed by date")
 
         X = self.to_quarters(X)
@@ -247,6 +248,10 @@ class Quarterizer(sklearn.base.BaseEstimator):
 
     def transform(self, X: pd.DataFrame):
         # TODO: take care of length and interpplotation of missing data
+        data = []
+        for q in self.to_quarters(X):
+            if len(q.data) > self.length_:
+                pass
         data = [q.data for q in self.to_quarters(X)]
         data = [np.concatenate([d[c].values for c in d.columns]) for d in data]
         data = pd.DataFrame.from_records(data)
