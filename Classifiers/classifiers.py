@@ -6,6 +6,7 @@ from math import *
 import functools
 import logging
 import itertools
+import collections
 import numpy as np
 
 
@@ -86,7 +87,7 @@ class Quarter(object):
         return self
 
     @staticmethod
-    def split_by_quarters(stock_name: str, data: pd.DataFrame):
+    def split_by_quarters(stock_name: str, data: pd.DataFrame, cols=('open', 'volume')):
         # BQ is buisness quarter
         logging.debug("splitting {}".format(stock_name))
         splitters = pd.bdate_range(start=data.iloc[0].name, end=data.iloc[-1].name, freq="BQ")
@@ -94,7 +95,7 @@ class Quarter(object):
             temp = data[start:end]
             if start in temp.index and end in temp.index:
                 del temp
-                yield Quarter(data[start:end], name=stock_name)
+                yield Quarter(data[start:end], name=stock_name, cols=cols)
         logging.debug("done {}".format(stock_name))
 
 
@@ -234,7 +235,7 @@ class Quarterizer(sklearn.base.BaseEstimator):
         for c in X.columns:
             if c not in self.cols:
                 X.drop(c, axis=1)
-        quarters = list(Quarter.split_by_quarters('', X))
+        quarters = list(Quarter.split_by_quarters('', X, cols=self.cols))
 
         def no_col_empty(q: Quarter):
             for col in q.data.columns:
@@ -247,17 +248,41 @@ class Quarterizer(sklearn.base.BaseEstimator):
         return X
 
     def transform(self, X: pd.DataFrame):
-        # TODO: take care of length and interpplotation of missing data
         data = []
         for q in self.to_quarters(X):
             if len(q.data) > self.length_:
-                pass
-        data = [q.data for q in self.to_quarters(X)]
-        data = [np.concatenate([d[c].values for c in d.columns]) for d in data]
+                q = Quarter(q.data.iloc[0:self.length_])
+            if len(q.data) < self.length_:
+                d = q.data
+                d = d.resample('{}M'.format(self.distance_.minutes), periods=self.length_)
+                q = Quarter(d)
+                q.ready_quarter_data(self.distance_.minutes)
+            data.append(q)
+
+        starts = [q.start for q in data]
+        ends = [q.end for q in data]
+        data = [np.concatenate([q.data[c].values for c in q.data.columns]) for q in data]
         data = pd.DataFrame.from_records(data)
+        data['start'] = starts
+        data['end'] = ends
         return data
 
+    @staticmethod
+    def cut_by_classes(original_data, q_data, classes):
+        """
+        :param original_data: Data from which quarters were made
+        :param q_data: Data after transform
+        :param classes: the classes for q_data
+        :return: dictionary of class to dataframe made from original data
+        """
+        if not isinstance(classes, pd.Series):
+            classes = pd.Series(classes)
 
+        res = collections.defaultdict(lambda: pd.DataFrame())
+        for q_row, c_row in zip(q_data.iterrows(), classes.iteritems()):
+            q_row = q_row[1]
+            c_row = c_row[1]
+            res[c_row] = pd.concat([res[c_row], original_data.loc[q_row['start']:q_row['end']]])
 
-
+        return res
 

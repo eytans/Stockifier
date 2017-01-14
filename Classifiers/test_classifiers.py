@@ -55,7 +55,13 @@ class Test_classifiers(TestCase):
 
     def test_quarter_transformer(self):
         quarterer = Quarterizer()
-        data = self.ld.get_stock_data('SHW')
+        data = self.ld.get_stock_data('A')
         quarterer.fit(data)
         qs = quarterer.transform(data)
-        self.assertListEqual([len(d) for d in qs], [quarterer.length_]*len(qs))
+        self.assertEqual(qs.shape[1], quarterer.length_ * len(quarterer.cols) + 2)
+        self.assertEquals(0, qs.isnull().sum().sum())
+        quarts = ['ABC', 'A', 'ISIS', 'SHW']
+        for qn in quarts:
+            qs = quarterer.transform(self.ld.get_stock_data(qn))
+            self.assertEqual(qs.shape[1], quarterer.length_ * len(quarterer.cols) + 2)
+            self.assertEquals(0, qs.isnull().sum().sum())

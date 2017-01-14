@@ -1,5 +1,6 @@
 from Utilities.orginizers import *
 from unittest import TestCase
+from Classifiers import classifiers
 
 
 class TestTrainingData(TestCase):
@@ -30,3 +31,15 @@ class TestTrainingData(TestCase):
         self.assertIsNotNone(classes)
         self.assertGreater(data.shape[0], 1000)
         self.assertEquals(data.shape[0], classes.shape[0])
+
+    def test_quarterizer_cut_by_clust(self):
+        from sklearn.cluster import KMeans
+        data, classes = self.td.get()
+        clusters = 6
+        quarterizer = classifiers.Quarterizer().fit(data)
+        quarters = quarterizer.transform(data)
+        q_clf = KMeans(n_clusters=clusters).fit(quarters.drop(['start', 'end'], axis=1))
+        quarters_c = q_clf.predict(quarters.drop(['start', 'end'], axis=1))
+        clust_to_data = quarterizer.cut_by_classes(data, quarters, quarters_c)
+        self.assertIsInstance(clust_to_data, dict)
+        self.assertGreater(len(clust_to_data), 0)
