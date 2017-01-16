@@ -1,5 +1,6 @@
 import sklearn.ensemble
 import sklearn.cluster
+import sklearn.metrics
 from Utilities.orginizers import *
 import Utilities
 from math import *
@@ -176,6 +177,9 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         for cols, stren in zip(connection_columns, strengths):
             if stren < self.threshold:
                 continue
+            cols = [c for c in cols if c in X.columns]
+            if len(cols) == 0:
+                continue
             self.relations_.append(stren)
             self.cols_.append(cols)
 
@@ -213,6 +217,9 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         for rel, probs in zip(self.relations_, predictions):
             results.append([b + p * rel for b, p in zip(base, probs)])
         return functools.reduce(lambda x, y: [x1 + y1 for x1, y1 in zip(x, y)], results)
+
+    def score(self, X, y):
+        return sklearn.metrics.accuracy_score(y, self.predict(X))
 
 
 class Quarterizer(sklearn.base.BaseEstimator):
