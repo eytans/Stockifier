@@ -171,9 +171,7 @@ class StrengthCalc(object):
                 strength -= dec
         return strength
 
-
-
-    def get_strength_stock(self, stock, min_number, max_number, step, threshold=0.75):
+    def get_strength_stock(self, stock, min_number=5, max_number=325, step=2, threshold=0.1):
         markets = self.ld.get_market_names()
         strength_dic = dict.fromkeys(markets)
         for mk in markets:
