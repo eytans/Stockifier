@@ -236,7 +236,7 @@ class LearningData(object):
 
 
 class TrainingData(object):
-    def __init__(self, name, days_forward=1, startdate=None, enddate=None, threshold='default', ld=None, k=50):
+    def __init__(self, name, days_forward=1, startdate=None, enddate=None, threshold='default', ld=None):
         self.name = name
         self.ld = ld
         if ld is None:
@@ -247,7 +247,6 @@ class TrainingData(object):
             self.data = self.data.iloc[0:self.ld.get_stock_data(name).shape[0] - (days_forward + self.data.shape[0])]
         self._threshold = None
         self.regulizer = StandardScaler()
-        self.selector = sklearn.feature_selection.SelectKBest(k=k)
         self._fitted = False
         self.set_threshold(threshold)
 
@@ -358,16 +357,9 @@ class TrainingData(object):
         if not self._fitted:
             self.data = pd.DataFrame(self.regulizer.fit_transform(self.data), index=self.data.index,
                                      columns=self.data.columns)
-            temp = self.selector.fit_transform(self.data, self.get_change().apply(self._threshold))
-            support = self.selector.get_support()
-            cols = [t[1] for t in filter(lambda tup: support[tup[0]], enumerate(self.data.columns))]
-            self.data = pd.DataFrame(temp, index=self.data.index, columns=cols)
             self._fitted = True
         data = pd.DataFrame(self.regulizer.transform(data), index=data.index, columns=data.columns)
-        temp = self.selector.transform(data)
-        support = self.selector.get_support()
-        cols = [t[1] for t in filter(lambda tup: support[tup[0]], enumerate(data.columns))]
-        self.data = pd.DataFrame(temp, index=data.index, columns=cols)
+        return data
 
     @staticmethod
     def cleanup_data(data, fill=True):
