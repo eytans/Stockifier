@@ -11,12 +11,9 @@ def mean(numbers):
 
 class ConfusionMatrix(object):
     def __init__(self, stock, model,strength=None,connections=None):
-        print("26")
-        # ready train data
+        #print("27")
         d, c = stock
         self.data, self.classes = stock
-
-        #extract trues and falses
         self.models = model
         self.strength = strength
         self.connections = connections
@@ -29,7 +26,6 @@ class ConfusionMatrix(object):
         self.FalsePos = 0
         self.FalseNeg = 0
         self.calc_mat()
-        # self.target_names = ["Predict True","Predict False"]
 
     def __repr__(self):
         st = ""
@@ -50,12 +46,12 @@ class ConfusionMatrix(object):
                 y_pred = self.models.fit(d, c, self.connections, self.strength).predict(td)
             else:
                 y_pred = self.models.fit(d, c).predict(td)
-            self.cnf_matrix += confusion_matrix(tc, y_pred)
-        self.normalize_matrix()
+            self.cnf_matrix += self.__normalize_rearrange_matrix(confusion_matrix(tc, y_pred))
+        self.__mean_matrix()
         self.accuracy = 100 * (self.TrueNeg * 0.8 + self.TruePos * 0.2)
         return self.normalize
 
-    def normalize_matrix(self):
+    def __normalize_matrix(self):
         d = numpy.zeros((2, 2))
         c = self.cnf_matrix
         d[1][1] = c[0][0] / (c[1][0] + c[0][0])
@@ -67,6 +63,29 @@ class ConfusionMatrix(object):
         d[0][0] = c[1][1] / (c[1][1] + c[0][1])
         self.TruePos = d[0][0]
         self.normalize = d
+        return d
+
+    def __mean_matrix(self):
+        d = numpy.zeros((2, 2))
+        c = self.cnf_matrix
+        d[1][1] = c[1][1] / 3
+        self.TrueNeg = d[1][1]
+        d[0][1] = c[0][1] / 3
+        self.FalseNeg = d[0][1]
+        d[1][0] = c[1][0] / 3
+        self.FalsePos = d[1][0]
+        d[0][0] = c[0][0] / 3
+        self.TruePos = d[0][0]
+        self.normalize = d
+        return d
+
+    @staticmethod
+    def __normalize_rearrange_matrix(c):
+        d = numpy.zeros((2, 2))
+        d[1][1] = c[0][0] / (c[1][0] + c[0][0])
+        d[0][1] = c[1][0] / (c[1][0] + c[0][0])
+        d[1][0] = c[0][1] / (c[1][1] + c[0][1])
+        d[0][0] = c[1][1] / (c[1][1] + c[0][1])
         return d
 
     def plot(self):
