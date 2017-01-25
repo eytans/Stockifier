@@ -3,7 +3,7 @@ from sklearn.metrics import confusion_matrix
 import numpy
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
-
+import sklearn.metrics
 
 def mean(numbers):
     return float(sum(numbers)) / max(len(numbers), 1)
@@ -37,6 +37,7 @@ class ConfusionMatrix(object):
         return self.__repr__()
 
     def calc_mat(self):
+        tmp_accuracy = 0
         # (d.iloc[0:round(len(d) * 0.7)], c.iloc[0:round(len(d) * 0.7)])
         # self.test_data = (d.iloc[round(len(d) * 0.7):len(d) - 1], c.iloc[round(len(d) * 0.7):len(d) - 1])
         for train_indexes, test_indexes in KFold().split(self.data):
@@ -47,8 +48,9 @@ class ConfusionMatrix(object):
             else:
                 y_pred = self.models.fit(d, c).predict(td)
             self.cnf_matrix += self.__normalize_rearrange_matrix(confusion_matrix(tc, y_pred))
+            tmp_accuracy += sklearn.metrics.accuracy_score(tc, y_pred , normalize=True)
         self.__mean_matrix()
-        self.accuracy = 100 * (self.TrueNeg * 0.8 + self.TruePos * 0.2)
+        self.accuracy = tmp_accuracy/3
         return self.normalize
 
     def __normalize_matrix(self):
