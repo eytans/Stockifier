@@ -146,7 +146,7 @@ class QuarterDistance(object):
 # relation classifier should have fields and strength for each connection
 # classification is done using base estimator, strength*connections regularised by combined.
 class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
-    def __init__(self, threshold=0.15, combined_weight=0.5, base_estimator=sklearn.ensemble.AdaBoostClassifier()):
+    def __init__(self, threshold=0.1, base_strength=0.5, combined_weight=0.5, base_estimator=sklearn.ensemble.AdaBoostClassifier()):
         """
         :param threshold: minimum value of relations to consider.
         :param combined_weight: the weight to put on the combined classifier.
@@ -155,6 +155,7 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         self.base_estimator = base_estimator
         self.threshold = threshold
         self.combined_weight = combined_weight
+        self.base_strength = base_strength
 
     def fit(self, X, y, connection_columns, strengths):
         """
@@ -211,8 +212,8 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
             connect = connection_e.predict_proba(X[cols])
             predictions.append((combined * self.combined_weight) + ((1 - self.combined_weight) * connect))
 
-        total_strength = max(sum(self.relations_), 1)
-        base = [total_strength * p for p in self.base_estimator_.predict_proba(X[self.base_cols_])]
+        # used to be maximum of self.relations_ and 1 we want to test self.realtions_
+        base = [self.base_strength * p for p in self.base_estimator_.predict_proba(X[self.base_cols_])]
         results = []
         for rel, probs in zip(self.relations_, predictions):
             results.append([b + p * rel for b, p in zip(base, probs)])
