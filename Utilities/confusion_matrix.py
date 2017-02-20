@@ -1,4 +1,5 @@
 import pandas
+import copy
 from sklearn.metrics import confusion_matrix
 import numpy
 import matplotlib.pyplot as plt
@@ -10,7 +11,7 @@ def mean(numbers):
 
 
 class ConfusionMatrix(object):
-    def __init__(self, stock, model,strength=None,connections=None):
+    def __init__(self, stock, model, strength=None, connections=None):
         #print("27")
         d, c = stock
         self.data, self.classes = stock
@@ -29,12 +30,27 @@ class ConfusionMatrix(object):
 
     def __repr__(self):
         st = ""
-        st+=str(self.models)
-        st+=("\nAccuracy: "+str(self.accuracy))
+        st += str(self.models)
+        st += ("\nAccuracy: "+str(self.accuracy))
         return st
 
     def __str__(self):
         return self.__repr__()
+
+    @staticmethod
+    def concat(*args, iterator=None):
+        it = args
+        if iterator is not None:
+            it = iterator
+
+        data = list(it)
+        res = copy.deepcopy(data[0])
+        res.accuracy = mean([d.accuracy for d in data])
+        res.TruePos = mean([d.TruePos for d in data])
+        res.TrueNeg = mean([d.TrueNeg for d in data])
+        res.FalsePos = mean([d.FalsePos for d in data])
+        res.FalseNeg = mean([d.FalseNeg for d in data])
+        return res
 
     def calc_mat(self):
         tmp_accuracy = 0
@@ -48,7 +64,7 @@ class ConfusionMatrix(object):
             else:
                 y_pred = self.models.fit(d, c).predict(td)
             self.cnf_matrix += self.__normalize_rearrange_matrix(confusion_matrix(tc, y_pred))
-            tmp_accuracy += sklearn.metrics.accuracy_score(tc, y_pred , normalize=True)
+            tmp_accuracy += sklearn.metrics.accuracy_score(tc, y_pred, normalize=True)
         self.__mean_matrix()
         self.accuracy = tmp_accuracy/3
         return self.normalize
@@ -84,10 +100,11 @@ class ConfusionMatrix(object):
     @staticmethod
     def __normalize_rearrange_matrix(c):
         d = numpy.zeros((2, 2))
-        d[1][1] = c[0][0] / (c[1][0] + c[0][0])
-        d[0][1] = c[1][0] / (c[1][0] + c[0][0])
-        d[1][0] = c[0][1] / (c[1][1] + c[0][1])
-        d[0][0] = c[1][1] / (c[1][1] + c[0][1])
+        total = c[1][0] + c[0][0] + c[1][1] + c[0][1]
+        d[1][1] = c[0][0] / total
+        d[0][1] = c[1][0] / total
+        d[1][0] = c[0][1] / total
+        d[0][0] = c[1][1] / total
         return d
 
     def plot(self):
