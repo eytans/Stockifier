@@ -261,3 +261,5 @@ db_dump/*
 
 Gatherer/Gatherer/YahooGatherer.cs
 cache/*
+
+.ipynb_checkpoints/*
