@@ -5,10 +5,32 @@ import numpy
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
 import sklearn.metrics
+from functools import lru_cache
 
 def mean(numbers):
     return float(sum(numbers)) / max(len(numbers), 1)
 
+
+class PrecisionRecallSampler(object):
+    def __init__(self, x, y, range=2, jump=0.2):
+        self.range = range
+        self.jump = jump
+        self.x = x
+        self.y = y
+
+    @lru_cache()
+    def get(self, model, **kwargs):
+        m = sklearn.clone(model)
+        precisions = []
+        recalls = []
+        cur = self.jump
+        while cur <= self.range:
+            m.set_params(**{"class_weight": cur})
+            cur += self.jump
+            cm = ConfusionMatrix((self.x, self.y), m, **kwargs)
+            precisions.append(cm.TruePos/(cm.TruePos+cm.FalsePos))
+            recalls.append(cm.TruePos/(cm.TruePos+cm.FalseNeg))
+        return precisions, recalls
 
 class ConfusionMatrix(object):
     def __init__(self, stock, model, strength=None, connections=None):
