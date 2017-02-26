@@ -37,6 +37,12 @@ class ConfusionMatrix(object):
     def __str__(self):
         return self.__repr__()
 
+    def true_acc(self):
+        return self.TruePos / (self.TruePos + self.TrueNeg)
+
+    def false_acc(self):
+        return self.FalsePos / (self.FalsePos + self.FalseNeg)
+
     @staticmethod
     def concat(*args, iterator=None):
         it = args
