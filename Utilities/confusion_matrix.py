@@ -78,13 +78,14 @@ class ConfusionMatrix(object):
     def __normalize_matrix(self):
         d = numpy.zeros((2, 2))
         c = self.cnf_matrix
-        d[1][1] = c[0][0] / (c[1][0] + c[0][0])
+        total = c[1][0] + c[0][0] + c[1][1] + c[0][1]
+        d[1][1] = c[0][0] / total
         self.TrueNeg = d[1][1]
-        d[0][1] = c[1][0] / (c[1][0] + c[0][0])
+        d[0][1] = c[1][0] / total
         self.FalseNeg = d[0][1]
-        d[1][0] = c[0][1] / (c[1][1] + c[0][1])
+        d[1][0] = c[0][1] / total
         self.FalsePos = d[1][0]
-        d[0][0] = c[1][1] / (c[1][1] + c[0][1])
+        d[0][0] = c[1][1] / total
         self.TruePos = d[0][0]
         self.normalize = d
         return d
@@ -106,11 +107,10 @@ class ConfusionMatrix(object):
     @staticmethod
     def __normalize_rearrange_matrix(c):
         d = numpy.zeros((2, 2))
-        total = c[1][0] + c[0][0] + c[1][1] + c[0][1]
-        d[1][1] = c[0][0] / total
-        d[0][1] = c[1][0] / total
-        d[1][0] = c[0][1] / total
-        d[0][0] = c[1][1] / total
+        d[1][1] = c[0][0]
+        d[0][1] = c[1][0]
+        d[1][0] = c[0][1]
+        d[0][0] = c[1][1]
         return d
 
     def plot(self):
