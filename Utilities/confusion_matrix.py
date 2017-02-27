@@ -60,10 +60,10 @@ class ConfusionMatrix(object):
         return self.__repr__()
 
     def true_acc(self):
-        return self.TruePos / (self.TruePos + self.TrueNeg)
+        return self.TruePos / (self.TruePos + self.FalsePos)
 
     def false_acc(self):
-        return self.FalsePos / (self.FalsePos + self.FalseNeg)
+        return self.FalsePos / (self.TrueNeg + self.FalseNeg)
 
     @staticmethod
     def concat(*args, iterator=None):
