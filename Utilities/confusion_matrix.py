@@ -97,31 +97,17 @@ class ConfusionMatrix(object):
         self.accuracy = tmp_accuracy/3
         return self.normalize
 
-    def __normalize_matrix(self):
-        d = numpy.zeros((2, 2))
-        c = self.cnf_matrix
-        total = c[1][0] + c[0][0] + c[1][1] + c[0][1]
-        d[1][1] = c[0][0] / total
-        self.TrueNeg = d[1][1]
-        d[0][1] = c[1][0] / total
-        self.FalseNeg = d[0][1]
-        d[1][0] = c[0][1] / total
-        self.FalsePos = d[1][0]
-        d[0][0] = c[1][1] / total
-        self.TruePos = d[0][0]
-        self.normalize = d
-        return d
-
     def __mean_matrix(self):
         d = numpy.zeros((2, 2))
-        c = self.cnf_matrix
-        d[1][1] = c[1][1] / 3
+        c = self.cnf_matrix / 3
+        total = c[0][0] + c[0][1] + c[1][0] + c[1][1]
+        d[1][1] = c[1][1] / total
         self.TrueNeg = d[1][1]
-        d[0][1] = c[0][1] / 3
+        d[0][1] = c[0][1] / total
         self.FalseNeg = d[0][1]
-        d[1][0] = c[1][0] / 3
+        d[1][0] = c[1][0] / total
         self.FalsePos = d[1][0]
-        d[0][0] = c[0][0] / 3
+        d[0][0] = c[0][0] / total
         self.TruePos = d[0][0]
         self.normalize = d
         return d
