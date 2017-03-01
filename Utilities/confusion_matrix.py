@@ -63,7 +63,7 @@ class ConfusionMatrix(object):
         return self.TruePos / (self.TruePos + self.FalsePos)
 
     def false_acc(self):
-        return self.FalsePos / (self.TrueNeg + self.FalseNeg)
+        return self.TrueNeg / (self.TrueNeg + self.FalseNeg)
 
     @staticmethod
     def concat(*args, iterator=None):
@@ -91,34 +91,21 @@ class ConfusionMatrix(object):
                 y_pred = self.models.fit(d, c, self.connections, self.strength).predict(td)
             else:
                 y_pred = self.models.fit(d, c).predict(td)
-            self.cnf_matrix += self.__normalize_rearrange_matrix(confusion_matrix(tc, y_pred))
+            self.cnf_matrix += confusion_matrix(tc, y_pred)
             tmp_accuracy += sklearn.metrics.accuracy_score(tc, y_pred, normalize=True)
         self.__mean_matrix()
         self.accuracy = tmp_accuracy/3
         return self.normalize
 
     def __mean_matrix(self):
-        d = numpy.zeros((2, 2))
         c = self.cnf_matrix / 3
         total = c[0][0] + c[0][1] + c[1][0] + c[1][1]
-        d[1][1] = c[1][1] / total
-        self.TrueNeg = d[1][1]
-        d[0][1] = c[0][1] / total
-        self.FalseNeg = d[0][1]
-        d[1][0] = c[1][0] / total
-        self.FalsePos = d[1][0]
-        d[0][0] = c[0][0] / total
-        self.TruePos = d[0][0]
+        d = c/total
+        self.TrueNeg = d[0][0]
+        self.FalseNeg = d[1][0]
+        self.FalsePos = d[0][1]
+        self.TruePos = d[1][1]
         self.normalize = d
-        return d
-
-    @staticmethod
-    def __normalize_rearrange_matrix(c):
-        d = numpy.zeros((2, 2))
-        d[1][1] = c[0][0]
-        d[0][1] = c[1][0]
-        d[1][0] = c[0][1]
-        d[0][0] = c[1][1]
         return d
 
     def plot(self):
