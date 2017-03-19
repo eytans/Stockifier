@@ -146,7 +146,7 @@ class QuarterDistance(object):
 # relation classifier should have fields and strength for each connection
 # classification is done using base estimator, strength*connections regularised by combined.
 class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
-    def __init__(self, threshold=0.1, base_strength=0.5, combined_weight=0.5, base_estimator=sklearn.ensemble.AdaBoostClassifier()):
+    def __init__(self, threshold=0.1, base_strength=0.5, combined_weight=0.5, base_estimator=sklearn.tree.DecisionTreeClassifier()):
         """
         :param threshold: minimum value of relations to consider.
         :param combined_weight: the weight to put on the combined classifier.
