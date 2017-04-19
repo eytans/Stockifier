@@ -9,6 +9,7 @@ import logging
 import itertools
 import collections
 import numpy as np
+from pathos import multiprocessing
 
 
 # def split_quarters_by_cluster(df):
@@ -146,7 +147,7 @@ class QuarterDistance(object):
 # relation classifier should have fields and strength for each connection
 # classification is done using base estimator, strength*connections regularised by combined.
 class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
-    def __init__(self, threshold=0.1, base_strength=0.5, combined_weight=0.5, base_estimator=sklearn.tree.DecisionTreeClassifier()):
+    def __init__(self, threshold=0.1, base_strength=0.5, combined_weight=0.5, njobs=None, base_estimator=sklearn.tree.DecisionTreeClassifier()):
         """
         :param threshold: minimum value of relations to consider.
         :param combined_weight: the weight to put on the combined classifier.
@@ -156,6 +157,7 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         self.threshold = threshold
         self.combined_weight = combined_weight
         self.base_strength = base_strength
+        self.njobs = njobs
 
     def fit(self, X, y, connection_columns, strengths):
         """
@@ -175,6 +177,8 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         self.connections_estimators_ = []
         self.relations_ = []
         self.cols_ = []
+        pool = multiprocessing.Pool(processes=self.njobs)
+
         for cols, stren in zip(connection_columns, strengths):
             if stren < self.threshold:
                 continue
@@ -184,13 +188,18 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
             self.relations_.append(stren)
             self.cols_.append(cols)
 
-            new_con_est = sklearn.base.clone(self.base_estimator)
-            self.connections_estimators_.append(new_con_est.fit(X[cols], y))
+        def train_connection(cols):
+            return sklearn.base.clone(self.base_estimator).fit(X[cols], y)
 
-            new_comb_est = sklearn.base.clone(self.base_estimator)
-            self.combined_estimators_.append(new_comb_est.fit(X[self.base_cols_ + cols], y))
+        self.connections_estimators_ = list(pool.map(train_connection, self.cols_))
+
+        def train_combined(cols):
+            return sklearn.base.clone(self.base_estimator).fit(X[self.base_cols_ + cols], y)
+
+        self.combined_estimators_ = list(pool.map(train_combined, self.cols_))
 
         self.classes_ = self.base_estimator_.classes_
+        pool.close()
         return self
 
     def __predict_from_probs(self, probs):
