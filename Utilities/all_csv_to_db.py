@@ -36,7 +36,7 @@ def main():
                         except:
                             doc[att] = row[i]
                     if isinstance(doc['open'], float) and isinstance(doc['close'], float):
-                        doc['change'] = abs(doc['open'] - doc['close']) / doc['open']
+                        doc['change'] = (doc['open'] - doc['close']) / doc['open']
                     else:
                         doc['change'] = 0
 
