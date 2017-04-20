@@ -7,6 +7,7 @@ import pandas
 import shelve
 import logging
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 import numpy
 logging.getLogger().setLevel(logging.ERROR)
 
@@ -55,13 +56,15 @@ def run_on_dates(start_date, model, stocks=('SHW', 'MNK', 'BIO', 'KRO'), is_sc=F
 
 
 if __name__ == '__main__':
-    penalty = 'l2'
-    intercept_scaling = 1.5
-    C = 4
-    base = LogisticRegression(C=C, penalty=penalty, intercept_scaling=intercept_scaling, n_jobs=-1, class_weight={False: 1, True: 3})
+    # penalty = 'l2'
+    # intercept_scaling = 1.5
+    # C = 4
+    kernel = 'sigmoid'
+    gamma = 0.001626
+    # base = LogisticRegression(C=C, penalty=penalty, intercept_scaling=intercept_scaling, n_jobs=-1, class_weight={False: 1, True: 3})
+    base = SVC(kernel=kernel, gamma=gamma)
     from sklearn.ensemble import BaggingClassifier
 
-    bmodel = BaggingClassifier(max_samples=0.7, max_features=0.7, n_estimators=10, base_estimator=base, n_jobs=8)
-    model = ConnectionStrengthClassifier(base_estimator=base, threshold=0.1, base_strength=0.6, combined_weight=0.2)
+    model = ConnectionStrengthClassifier(base_estimator=base, threshold=0.15, base_strength=0.1, combined_weight=0.9)
     start_date = datetime.datetime(2016, 10, 28)
-    run_on_dates(start_date=start_date, model=bmodel, is_sc=False, is_tree=False)
+    run_on_dates(start_date=start_date, model=model, is_sc=True, is_tree=False)

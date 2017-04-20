@@ -1,4 +1,4 @@
-from Classifiers import create_quarter_clusterer, create_adaboost, Quarterizer
+from Classifiers import create_adaboost
 from Utilities.orginizers import LearningData, TrainingData
 from unittest import TestCase
 from sklearn.model_selection import KFold
@@ -13,10 +13,6 @@ class Test_classifiers(TestCase):
     def setUp(self):
         logging.getLogger().setLevel(logging.DEBUG)
         self.ld = LearningData()
-
-    def test_create_quarter_clusterer(self):
-        clusterer = create_quarter_clusterer(LearningData())
-        self.assertIsNotNone(clusterer)
 
     def test_tree_adaboost(self):
         self.adaboost_acc(DecisionTreeClassifier())
@@ -52,16 +48,3 @@ class Test_classifiers(TestCase):
 
     def test_ready_training_data(self):
         self.assertIsNotNone(TrainingData('SHW').add_history(10).set_threshold(0.8).get())
-
-    def test_quarter_transformer(self):
-        quarterer = Quarterizer()
-        data = self.ld.get_stock_data('A')
-        quarterer.fit(data)
-        qs = quarterer.transform(data)
-        self.assertEqual(qs.shape[1], quarterer.length_ * len(quarterer.cols) + 2)
-        self.assertEquals(0, qs.isnull().sum().sum())
-        quarts = ['ABC', 'A', 'ISIS', 'SHW']
-        for qn in quarts:
-            qs = quarterer.transform(self.ld.get_stock_data(qn))
-            self.assertEqual(qs.shape[1], quarterer.length_ * len(quarterer.cols) + 2)
-            self.assertEquals(0, qs.isnull().sum().sum())
