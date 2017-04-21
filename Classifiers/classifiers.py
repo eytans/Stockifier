@@ -47,7 +47,8 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         self.connections_estimators_ = []
         self.relations_ = []
         self.cols_ = []
-        pool = multiprocessing.Pool(processes=self.njobs)
+        if self.njobs != 1:
+            pool = multiprocessing.Pool(processes=self.njobs)
 
         for cols, stren in zip(connection_columns, strengths):
             if stren < self.threshold:
@@ -61,15 +62,20 @@ class ConnectionStrengthClassifier(sklearn.base.BaseEstimator):
         def train_connection(cols):
             return sklearn.base.clone(self.base_estimator).fit(X[cols], y)
 
-        self.connections_estimators_ = list(pool.map(train_connection, self.cols_))
+        if self.njobs == 1:
+            func = map
+        else:
+            func = pool.map()
+        self.connections_estimators_ = list(func(train_connection, self.cols_))
 
         def train_combined(cols):
             return sklearn.base.clone(self.base_estimator).fit(X[self.base_cols_ + cols], y)
 
-        self.combined_estimators_ = list(pool.map(train_combined, self.cols_))
+        self.combined_estimators_ = list(func(train_combined, self.cols_))
 
         self.classes_ = self.base_estimator_.classes_
-        pool.close()
+        if self.njobs != 1:
+            pool.close()
         return self
 
     def __predict_from_probs(self, probs):
